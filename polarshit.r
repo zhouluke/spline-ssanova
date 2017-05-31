@@ -19,23 +19,50 @@ setwd("/home/luke/Dropbox/LIN1290/spline-ssanova")
 ORIGIN.X = 123.472
 ORIGIN.Y = 0
 
+#################################################################
+# FILE I/O
+#################################################################
+
+# Reads in a set of Cartesian coordinates organized in a tab-delimited .txt file
+
+# Expected order of columns:
+# Speaker	Task	Label	TokNum	X	Y	AAAid
 
 spkCart = read.table("BM-s-sh-cart.txt", sep="\t", header=TRUE)
 spkCart$X = spkCart$X - ORIGIN.X
 spkCart$Y = spkCart$Y - ORIGIN.Y
 spkCart$tokID = paste(spkCart$Speaker,spkCart$Task,spkCart$Label,spkCart$TokNum,sep="-")
-myPlotCart <- ggplot(spkCart, aes(x=X, y=Y, group = tokID, colour=Label))
-myPlotCart + geom_line(aes(y=Y), alpha = 0.8, size=1) 
 
+# Filters by task type
+spkCart = spkCart[spkCart$Task=="base",]
+
+# Renames label values
+spkCart$Label = mapvalues(spkCart$Label, from = c("s", "S", "x"), to = c("s", "ʃ", "ɕ"))
+#c("[s]", "[ʃ]", "[ɕ]")
+
+# Data read-in sanity check: plots all splines. One plot per set of labels.
+myPlotCart <- ggplot(spkCart, aes(x=X, y=Y, group = tokID, colour=Label))
+myPlotCart + geom_line(aes(y=Y), alpha = 0.8, size=1) + 
+  ylab("") + xlab("") + scale_color_brewer(type = "qual", palette = "Spectral") +
+  facet_wrap(~ Label)  + theme(legend.position="none") + theme(strip.text.x=element_text(size=30))
+
+#################################################################
+# POLAR CONVERSION
+#################################################################
+
+# Conversion of the data to polars
 spkCart$r = sqrt(spkCart$X*spkCart$X + spkCart$Y*spkCart$Y)
 spkCart$thetaTmp = NISTradianTOdeg(atan(spkCart$Y/(spkCart$X)))
 spkCart$theta = ifelse(spkCart$X<0,180-abs(spkCart$thetaTmp),spkCart$thetaTmp)
 
-# +  + ylab("") + xlab("") + scale_color_brewer(type = "qual", palette = "Spectral") +facet_wrap(~ word)  + theme(legend.position="none") + theme(strip.text.x=element_text(size=30))
+head(spkCart)
 
 #library(plotrix)
 polar.plot(spkCart$r, spkCart$theta, labels="",rp.type="s",radial.lim=range(0,80))
 
+#################################################################
+# SSANOVA IN POLAR COORDINATES
+#################################################################
 
 spkCartModel <- ssanova(r ~ Label + theta + Label:theta, data=spkCart)
 summary(spkCartModel)
@@ -48,6 +75,10 @@ spkNewData$r <- predict(spkCartModel, newdata = spkNewData, se = T)$fit
 spkNewData$SE<- predict(spkCartModel, newdata = spkNewData, se = T)$se.fit 
 head(spkNewData)
 
+#################################################################
+# PLOTTING OF THE SSANOVA MODEL
+#################################################################
+
 # Conversion to Cartesian for plotting purposes
 spkNewData$X = spkNewData$r * cos(NISTdegTOradian(spkNewData$theta)) #* 123.472 + 123.472
 spkNewData$Y = spkNewData$r * sin(NISTdegTOradian(spkNewData$theta)) #* 123.472 + 123.472
@@ -58,10 +89,6 @@ spkNewData$SE.low.y = (spkNewData$r - spkNewData$SE*1.96) * sin(NISTdegTOradian(
 spkNewData$SE.hi.x = (spkNewData$r + spkNewData$SE*1.96) * cos(NISTdegTOradian(spkNewData$theta))
 spkNewData$SE.hi.y = (spkNewData$r + spkNewData$SE*1.96) * sin(NISTdegTOradian(spkNewData$theta))
 head(spkNewData)
-
-# Renames label values
-spkNewData$Label = mapvalues(spkNewData$Label, from = c("s", "S", "x"), to = c("s", "ʃ", "ɕ"))
-#c("[s]", "[ʃ]", "[ɕ]")
 
 # Plots average contours
 spkComp <- ggplot(spkNewData, aes(x = X, colour = Label))

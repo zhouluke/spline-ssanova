@@ -23,18 +23,20 @@ ORIGIN.Y = 0
 # FILE I/O
 #################################################################
 
+speaker = "TP5"
+speaker.filename = paste(speaker,"-s-sh-cart.txt",sep="")
+
+task.filter = "base"
+
 # Reads in a set of Cartesian coordinates organized in a tab-delimited .txt file
 
-# Expected order of columns:
-# Speaker	Task	Label	TokNum	X	Y	AAAid
+# Expected columns:
+# Speaker	  Task  	Label	  TokNum	  X 	Y 	AAAmeta
 
-spkCart = read.table("BM-s-sh-cart.txt", sep="\t", header=TRUE)
+spkCart = read.table(speaker.filename, sep="\t", header=TRUE)
 spkCart$X = spkCart$X - ORIGIN.X
 spkCart$Y = spkCart$Y - ORIGIN.Y
 spkCart$tokID = paste(spkCart$Speaker,spkCart$Task,spkCart$Label,spkCart$TokNum,sep="-")
-
-# Filters by task type
-spkCart = spkCart[spkCart$Task=="base",]
 
 # Renames label values
 spkCart$Label = mapvalues(spkCart$Label, from = c("s", "S", "x"), to = c("s", "ʃ", "ɕ"))
@@ -42,9 +44,9 @@ spkCart$Label = mapvalues(spkCart$Label, from = c("s", "S", "x"), to = c("s", "�
 
 # Data read-in sanity check: plots all splines. One plot per set of labels.
 myPlotCart <- ggplot(spkCart, aes(x=X, y=Y, group = tokID, colour=Label))
-myPlotCart + geom_line(aes(y=Y), alpha = 0.8, size=1) + 
-  ylab("") + xlab("") + scale_color_brewer(type = "qual", palette = "Spectral") +
-  facet_wrap(~ Label)  + theme(legend.position="none") + theme(strip.text.x=element_text(size=30))
+myPlotCart + geom_line(aes(y=Y), alpha = 1, size=1) + 
+  ylab("") + xlab("") + scale_color_brewer(type = "qual", palette = "Dark2") +
+  facet_wrap(~ Label + Task)  + theme(legend.position="none") + theme(strip.text.x=element_text(size=30))
 
 #################################################################
 # POLAR CONVERSION
@@ -64,14 +66,19 @@ polar.plot(spkCart$r, spkCart$theta, labels="",rp.type="s",radial.lim=range(0,80
 # SSANOVA IN POLAR COORDINATES
 #################################################################
 
-spkCartModel <- ssanova(r ~ Label + theta + Label:theta, data=spkCart)
+# Filters by task type
+spk.task.filt = spkCart[spkCart$Task==task.filter,]
+
+# Creation of the SSANOVA model
+spkCartModel <- ssanova(r ~ Label + theta + Label:theta, data=spk.task.filt)
 summary(spkCartModel)
 
-spkNewData <- expand.grid(theta=seq(min(spkCart$theta), max(spkCart$theta), length.out=100), Label=levels(spkCart$Label)) 
-
-# Generates predicted radius values (in polars!)
+# Generates predicted radius values for each theta-ray
+spkNewData <- expand.grid(theta=seq(min(spk.task.filt$theta), max(spk.task.filt$theta), length.out=100), 
+                          Label=levels(spk.task.filt$Label), Task=levels(spk.task.filt$Task)) 
 spkNewData$r <- predict(spkCartModel, newdata = spkNewData, se = T)$fit
-# Generates associated standard errors (in polars!)
+
+# Generates associated standard errors for each theta-ray 
 spkNewData$SE<- predict(spkCartModel, newdata = spkNewData, se = T)$se.fit 
 head(spkNewData)
 
@@ -80,8 +87,8 @@ head(spkNewData)
 #################################################################
 
 # Conversion to Cartesian for plotting purposes
-spkNewData$X = spkNewData$r * cos(NISTdegTOradian(spkNewData$theta)) #* 123.472 + 123.472
-spkNewData$Y = spkNewData$r * sin(NISTdegTOradian(spkNewData$theta)) #* 123.472 + 123.472
+spkNewData$X = spkNewData$r * cos(NISTdegTOradian(spkNewData$theta))
+spkNewData$Y = spkNewData$r * sin(NISTdegTOradian(spkNewData$theta))
 
 # Calculates Cartesian coordinates for the standard errors
 spkNewData$SE.low.x = (spkNewData$r - spkNewData$SE*1.96) * cos(NISTdegTOradian(spkNewData$theta))
@@ -91,10 +98,11 @@ spkNewData$SE.hi.y = (spkNewData$r + spkNewData$SE*1.96) * sin(NISTdegTOradian(s
 head(spkNewData)
 
 # Plots average contours
-spkComp <- ggplot(spkNewData, aes(x = X, colour = Label))
-spkComp + geom_line(aes(y = Y), size=2, alpha=1) + 
-  scale_color_brewer(type = "qual", palette = "Spectral") + ylab("") + xlab("") + 
+spkComp = ggplot(spkNewData, aes(x = X, colour = Label))
+spkComp + geom_line(aes(y = Y), size=1.5, alpha=1) + 
+  scale_color_brewer(type = "qual", palette = "Dark2") + ylab("") + xlab("") + 
   geom_line(aes(x=SE.hi.x, y = SE.hi.y), lty=2, alpha=1) + 
   geom_line(aes(x=SE.low.x, y = SE.low.y), lty=2, alpha=1) +  
-  theme(legend.position=c(0.12, 0.8)) + theme(legend.text=element_text(size=20)) + 
+  theme(legend.position=c(0.12, 0.3)) + theme(legend.text=element_text(size=20)) + 
   theme(legend.title=element_text(size=0))
+

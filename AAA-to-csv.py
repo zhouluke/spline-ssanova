@@ -23,7 +23,8 @@ readMyCoords=True
 
 
 # Table header
-print ("Speaker\tTask\tLabel\tTokNum\tX\tY\tAAAid")
+HEADER = ["Speaker","Task","Label","TokNum","X","Y","AAAmeta"]
+print ("\t".join(HEADER))
 
 
 for line in lines:
@@ -38,13 +39,17 @@ for line in lines:
 		continue
 	
 	if "Tongue" in line:
+		
 		readMyCoords = True
-		aaaLblRaw=line
+
 		line = re.sub(r",", r" ", line)
 		line = re.sub(r"(\s)+", r"\1", line)
+		aaaLblRaw=line
+
 		line = line.split(" ")
 		tokLbl = line[1]
-		aaaID = line[5]
+		tokNum = line[5]
+
 		continue
 
 	if "Mean" in line:
@@ -68,4 +73,4 @@ for line in lines:
 		if coord1=="123.472" and coord2 == "0.000":
 			continue
 
-		print ("\t".join([spk,task,tokLbl,aaaID,coord1,coord2,aaaLblRaw]))
+		print ("\t".join([spk,task,tokLbl,tokNum,coord1,coord2,aaaLblRaw]))

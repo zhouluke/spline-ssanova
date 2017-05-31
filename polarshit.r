@@ -10,20 +10,26 @@ library(ggplot2)
 library(gss)
 library(NISTunits)
 
-setwd("/home/luke/Dropbox/LIN1290/Splines/Anal")
+setwd("/home/luke/Dropbox/LIN1290/spline-ssanova")
 
-spk = read.table("BM-s-sh.txt", sep="\t", header=TRUE)
-spk$X = spk$r * cos(NISTdegTOradian(spk$theta+90)) #* 123.472 + 123.472
-spk$Y = spk$r * sin(NISTdegTOradian(spk$theta+90)) #* 123.472 + 123.472
-spk$tokID = paste(spk$Speaker,spk$Task,spk$Label,spk$AAA.ID,sep="-")
-summary(spk)
+ORIGIN.X = 123.472
+ORIGIN.Y = 0
 
-myPlot <- ggplot(spk, aes(x=X*(-1), y=Y, group = tokID, colour=Label))
-myPlot + geom_line(aes(y=Y), alpha = 0.8, size=1) 
+# spk = read.table("BM-s-sh.txt", sep="\t", header=TRUE)
+# spk$X = spk$r * cos(NISTdegTOradian(spk$theta+90)) #* 123.472 + 123.472
+# spk$Y = spk$r * sin(NISTdegTOradian(spk$theta+90)) #* 123.472 + 123.472
+# spk$tokID = paste(spk$Speaker,spk$Task,spk$Label,spk$AAA.ID,sep="-")
+# summary(spk)
+# 
+# myPlot <- ggplot(spk, aes(x=X*(-1), y=Y, group = tokID, colour=Label))
+# myPlot + geom_line(aes(y=Y), alpha = 0.8, size=1)
+
+
 
 spkCart = read.table("BM-s-sh-cart.txt", sep="\t", header=TRUE)
-spkCart$X = spkCart$X - 123.472
-spkCart$tokID = paste(spkCart$Speaker,spkCart$Task,spkCart$Label,spkCart$AAA.ID,sep="-")
+spkCart$X = spkCart$X - ORIGIN.X
+spkCart$Y = spkCart$Y - ORIGIN.Y
+spkCart$tokID = paste(spkCart$Speaker,spkCart$Task,spkCart$Label,spkCart$TokNum,sep="-")
 myPlotCart <- ggplot(spkCart, aes(x=X, y=Y, group = tokID, colour=Label))
 myPlotCart + geom_line(aes(y=Y), alpha = 0.8, size=1) 
 
@@ -35,3 +41,6 @@ spkCart$theta2 = ifelse(spkCart$X<0,180-abs(spkCart$theta),spkCart$theta)
 
 #library(plotrix)
 polar.plot(spkCart$r, spkCart$theta2, labels="",rp.type="s",radial.lim=range(0,80))
+
+
+spkCartModel <- ssanova(r ~ Label + theta + label:theta, data=spkCart)

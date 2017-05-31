@@ -60,7 +60,7 @@ spkNewData$SE.hi.y = (spkNewData$r + spkNewData$SE*1.96) * sin(NISTdegTOradian(s
 head(spkNewData)
 
 # Renames label values
-spkNewData$Label = mapvalues(spkNewData$Label, from = c("s", "ʃ", "ɕ"), to = c("s", "ʃ", "ɕ"))
+spkNewData$Label = mapvalues(spkNewData$Label, from = c("s", "S", "x"), to = c("s", "ʃ", "ɕ"))
 #c("[s]", "[ʃ]", "[ɕ]")
 
 # Plots average contours

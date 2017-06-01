@@ -23,13 +23,17 @@ ORIGIN.Y = 0
 # FILE I/O
 #################################################################
 
-speaker = "TP5"
+speaker = "BM"
 speaker.filename = paste(speaker,"-s-sh-cart.txt",sep="")
 
 task.filter = "base"
 
-# Reads in a set of Cartesian coordinates organized in a tab-delimited .txt file
+bp.filename = "bite-planes.txt"
+bp.spk.nm = paste(speaker,"-",task.filter,sep="")
 
+
+# SPLINE IMPORT:
+# Reads in a set of Cartesian coordinates organized in a tab-delimited .txt file
 # Expected columns:
 # Speaker	  Task  	Label	  TokNum	  X 	Y 	AAAmeta
 
@@ -48,19 +52,35 @@ myPlotCart + geom_line(aes(y=Y), alpha = 1, size=1) +
   ylab("") + xlab("") + scale_color_brewer(type = "qual", palette = "Dark2") +
   facet_wrap(~ Label + Task)  + theme(legend.position="none") + theme(strip.text.x=element_text(size=30))
 
+
+# BITE PLANE FILE IMPORT
+# Expected columns:   X   Y   Spk-Task
+bp.data = read.table(bp.filename, sep="\t", header=TRUE)
+bp.spk = bp.data[bp.data$SpkTask==bp.spk.nm,]
+
+# Calculates rotation angle in radians
+rot.angle = -1 * atan(abs(bp.spk[2,"Y"]-bp.spk[1,"Y"])/(bp.spk[2,"X"]-bp.spk[1,"X"]))
+
+
 #################################################################
 # POLAR CONVERSION
 #################################################################
 
 # Conversion of the data to polars
 spkCart$r = sqrt(spkCart$X*spkCart$X + spkCart$Y*spkCart$Y)
-spkCart$thetaTmp = NISTradianTOdeg(atan(spkCart$Y/(spkCart$X)))
-spkCart$theta = ifelse(spkCart$X<0,180-abs(spkCart$thetaTmp),spkCart$thetaTmp)
-
-head(spkCart)
+spkCart$theta = NISTradianTOdeg(atan(spkCart$Y/(spkCart$X)))
+spkCart$theta = ifelse(spkCart$X<0,180-abs(spkCart$theta),spkCart$theta)
 
 #library(plotrix)
-polar.plot(spkCart$r, spkCart$theta, labels="",rp.type="s",radial.lim=range(0,80))
+#polar.plot(spkCart$r, spkCart$theta, labels="",rp.type="s",radial.lim=range(0,80))
+
+#################################################################
+# BITE PLANE ROTATION + PALATE TRACE ROW STORAGE
+#################################################################
+
+spkCart$theta = spkCart$theta - NISTradianTOdeg(rot.angle)
+
+pal.traces = spkCart[spkCart$Task=="pal",]
 
 #################################################################
 # SSANOVA IN POLAR COORDINATES
@@ -68,41 +88,44 @@ polar.plot(spkCart$r, spkCart$theta, labels="",rp.type="s",radial.lim=range(0,80
 
 # Filters by task type
 spk.task.filt = spkCart[spkCart$Task==task.filter,]
+spk.task.filt$Task = factor(spk.task.filt$Task)
+spk.task.filt$Label = factor(spk.task.filt$Label)
 
 # Creation of the SSANOVA model
 spkCartModel <- ssanova(r ~ Label + theta + Label:theta, data=spk.task.filt)
-summary(spkCartModel)
+#summary(spkCartModel)
 
 # Generates predicted radius values for each theta-ray
-spkNewData <- expand.grid(theta=seq(min(spk.task.filt$theta), max(spk.task.filt$theta), length.out=100), 
+spk.new.data <- expand.grid(theta=seq(min(spk.task.filt$theta), max(spk.task.filt$theta), length.out=100), 
                           Label=levels(spk.task.filt$Label), Task=levels(spk.task.filt$Task)) 
-spkNewData$r <- predict(spkCartModel, newdata = spkNewData, se = T)$fit
+spk.new.data$r <- predict(spkCartModel, newdata = spk.new.data, se = T)$fit
 
 # Generates associated standard errors for each theta-ray 
-spkNewData$SE<- predict(spkCartModel, newdata = spkNewData, se = T)$se.fit 
-head(spkNewData)
+spk.new.data$SE<- predict(spkCartModel, newdata = spk.new.data, se = T)$se.fit 
+#head(spk.new.data)
 
 #################################################################
 # PLOTTING OF THE SSANOVA MODEL
 #################################################################
 
 # Conversion to Cartesian for plotting purposes
-spkNewData$X = spkNewData$r * cos(NISTdegTOradian(spkNewData$theta))
-spkNewData$Y = spkNewData$r * sin(NISTdegTOradian(spkNewData$theta))
+spk.new.data$X = spk.new.data$r * cos(NISTdegTOradian(spk.new.data$theta))
+spk.new.data$Y = spk.new.data$r * sin(NISTdegTOradian(spk.new.data$theta))
 
 # Calculates Cartesian coordinates for the standard errors
-spkNewData$SE.low.x = (spkNewData$r - spkNewData$SE*1.96) * cos(NISTdegTOradian(spkNewData$theta))
-spkNewData$SE.low.y = (spkNewData$r - spkNewData$SE*1.96) * sin(NISTdegTOradian(spkNewData$theta))
-spkNewData$SE.hi.x = (spkNewData$r + spkNewData$SE*1.96) * cos(NISTdegTOradian(spkNewData$theta))
-spkNewData$SE.hi.y = (spkNewData$r + spkNewData$SE*1.96) * sin(NISTdegTOradian(spkNewData$theta))
-head(spkNewData)
+spk.new.data$SE.low.x = (spk.new.data$r - spk.new.data$SE*1.96) * cos(NISTdegTOradian(spk.new.data$theta))
+spk.new.data$SE.low.y = (spk.new.data$r - spk.new.data$SE*1.96) * sin(NISTdegTOradian(spk.new.data$theta))
+spk.new.data$SE.hi.x = (spk.new.data$r + spk.new.data$SE*1.96) * cos(NISTdegTOradian(spk.new.data$theta))
+spk.new.data$SE.hi.y = (spk.new.data$r + spk.new.data$SE*1.96) * sin(NISTdegTOradian(spk.new.data$theta))
+#head(spk.new.data)
 
 # Plots average contours
-spkComp = ggplot(spkNewData, aes(x = X, colour = Label))
+spkComp = ggplot(spk.new.data, aes(x = X, colour = Label))
 spkComp + geom_line(aes(y = Y), size=1.5, alpha=1) + 
   scale_color_brewer(type = "qual", palette = "Dark2") + ylab("") + xlab("") + 
   geom_line(aes(x=SE.hi.x, y = SE.hi.y), lty=2, alpha=1) + 
-  geom_line(aes(x=SE.low.x, y = SE.low.y), lty=2, alpha=1) +  
-  theme(legend.position=c(0.12, 0.3)) + theme(legend.text=element_text(size=20)) + 
+  geom_line(aes(x=SE.low.x, y = SE.low.y), lty=2, alpha=1) +
+  #geom_line(data=pal.traces,aes(pal.traces$X, y = pal.traces$Y), size=1,lty=1, alpha=1) +
+  theme(legend.position=c(0.8, 0.3)) + theme(legend.text=element_text(size=20)) + 
   theme(legend.title=element_text(size=0))
 

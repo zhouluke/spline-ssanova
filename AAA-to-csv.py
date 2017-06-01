@@ -14,6 +14,7 @@ lines = file.readlines()
 
 BASE_TASK_ID = "base"
 IMIT_TASK_ID = "imit"
+PALATE_TASK_ID = "pal"
 
 
 task=BASE_TASK_ID
@@ -27,10 +28,12 @@ HEADER = ["Speaker","Task","Label","TokNum","X","Y","AAAmeta"]
 print ("\t".join(HEADER))
 
 
+
 for line in lines:
 
 	line = line.strip()
 	line = re.sub(r"(\s)+", r"\1", line)
+	line = re.sub(r",", r" ", line)
 
 	if not line:
 		continue
@@ -41,9 +44,6 @@ for line in lines:
 	if "Tongue" in line:
 		
 		readMyCoords = True
-
-		line = re.sub(r",", r" ", line)
-		line = re.sub(r"(\s)+", r"\1", line)
 		aaaLblRaw=line
 
 		line = line.split(" ")
@@ -55,16 +55,26 @@ for line in lines:
 	if "Mean" in line:
 		readMyCoords = False
 		aaaLblRaw=line
-		# Flips the task type
 		task = IMIT_TASK_ID #if task==BASE_TASK_ID else BASE_TASK_ID
 
 	if "Diff" in line:
 		readMyCoords = False
 		aaaLblRaw=line
-		# Flips the task type
 		task = BASE_TASK_ID
 
+	if "Palate" in line:
+		readMyCoords = True
+		aaaLblRaw=line
+
+		tokLbl = PALATE_TASK_ID
+		tokNum = PALATE_TASK_ID
+		task = PALATE_TASK_ID
+
+		continue
+
+
 	if readMyCoords:
+
 		line = line.split("\t")
 		coord1 = line[0]
 		coord2 = line[1]

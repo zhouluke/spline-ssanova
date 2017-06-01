@@ -31,7 +31,7 @@ bp.filename = "bite-planes.txt"
 task.filter = "base"
 bp.spk.nm = paste(speaker,"-",task.filter,sep="")
 
-show.comp.cons = TRUE
+show.comp.cons = FALSE
 show.pal = TRUE
 
 colour.palate = "Dark2"
@@ -152,25 +152,39 @@ spk.new.data$Y = spk.new.data$R * sin((spk.new.data$Theta))
 
 # Calculates Cartesian coordinates for the standard errors
 TWO.STD = 1.9545
-spk.new.data$SE.low.x = (spk.new.data$R - spk.new.data$SE*TWO.STD) * cos((spk.new.data$Theta))
-spk.new.data$SE.low.y = (spk.new.data$R - spk.new.data$SE*TWO.STD) * sin((spk.new.data$Theta))
-spk.new.data$SE.hi.x = (spk.new.data$R + spk.new.data$SE*TWO.STD) * cos((spk.new.data$Theta))
-spk.new.data$SE.hi.y = (spk.new.data$R + spk.new.data$SE*TWO.STD) * sin((spk.new.data$Theta))
-#head(spk.new.data)
+rows = nrow(spk.new.data)
 
-main.cons = spk.new.data[spk.new.data$Label %in% NEW.LABELS,]
-comp.cons = spk.new.data[spk.new.data$Label %in% COMP.CONS,]
+SE.low = data.frame(X=rep(as.double(NA),rows),Y=rep(as.double(NA),rows),stringsAsFactors=FALSE) 
+SE.hi = data.frame(X=rep(as.double(NA),rows),Y=rep(as.double(NA),rows),stringsAsFactors=FALSE) 
 
+SE.low$X = (spk.new.data$R - spk.new.data$SE*TWO.STD) * cos((spk.new.data$Theta))
+SE.low$Y = (spk.new.data$R - spk.new.data$SE*TWO.STD) * sin((spk.new.data$Theta))
+SE.hi$X = (spk.new.data$R + spk.new.data$SE*TWO.STD) * cos((spk.new.data$Theta))
+SE.hi$Y = (spk.new.data$R + spk.new.data$SE*TWO.STD) * sin((spk.new.data$Theta))
 
+SE.low = SE.low[order(-SE.low$X),]
+SE.hi = SE.hi[order(-SE.hi$X),]
+
+# Separation based on whether the consonants are our main ones or the "comparison" ones
+main.ind = spk.new.data$Label %in% NEW.LABELS
+comp.ind = spk.new.data$Label %in% COMP.CONS
+
+main.data = spk.new.data[main.ind,]
+comp.data = spk.new.data[comp.ind,]
+
+main.SE.low = SE.low[main.ind,]
+main.SE.hi = SE.hi[main.ind,]
+comp.SE.low = SE.low[comp.ind,]
+comp.SE.hi = SE.hi[comp.ind,]
 
 # Plots average contours for each label
-spk.graph = ggplot(main.cons, aes(x = X, colour = Label))
+spk.graph = ggplot(main.data, aes(x = X, colour = Label))
 spk.graph = spk.graph + geom_line(aes(y = Y), size=1.5, alpha=1) + 
-  ylim(10,80) + xlim(-30,50) +
-  scale_color_brewer(type = "qual", palette = colour.palate) + ylab("") + xlab("") + 
+  ylim(10,80) + xlim(-30,50) + ylab("") + xlab("") + 
+  scale_color_brewer(type = "qual", palette = colour.palate) + 
   # Draws the SE range
-  geom_line(aes(x=SE.hi.x, y = SE.hi.y), lty=3, alpha=1) + 
-  geom_line(aes(x=SE.low.x, y = SE.low.y), lty=3, alpha=1) +
+  geom_line(data=main.SE.hi,aes(x=X, y = Y), lty=3, alpha=1) + 
+  geom_line(data=main.SE.low,aes(x=X, y = Y), lty=3, alpha=1) +
   # Draws the palate trace
   { if(show.pal) 
     geom_line(data=pal.traces,aes(x=pal.traces$X, y = pal.traces$Y), size=1,lty=1, alpha=1) 
@@ -182,12 +196,10 @@ spk.graph = spk.graph + geom_line(aes(y = Y), size=1.5, alpha=1) +
 # Draws the comparison consonants + SE range
 if(show.comp.cons) {
   spk.graph = spk.graph +
-  geom_line(data=comp.cons,aes(x=comp.cons$X, y = comp.cons$Y), size=0.7, lty=1, alpha=1) +
-  geom_line(data=comp.cons,aes(x=SE.hi.x, y = SE.hi.y), lty=3, alpha=1) +
-  geom_line(data=comp.cons,aes(x=SE.low.x, y = SE.low.y), lty=3, alpha=1)
+  geom_line(data=comp.data,aes(x=comp.data$X, y = comp.data$Y), size=0.7, lty=1, alpha=1) +
+  geom_line(data=comp.data,aes(x=comp.SE.hi$X, y = comp.SE.hi$Y), lty=3, alpha=1) +
+  geom_line(data=comp.data,aes(x=comp.SE.low$X, y = comp.SE.low$Y), lty=3, alpha=1)
 }
 
 spk.graph
-  
-  
 

@@ -8,6 +8,8 @@
 #install.packages("ggplot2")
 #install.packages("plyr")
 
+rm(list = ls())
+
 #load libraries
 library(ggplot2)
 library(gss)
@@ -16,25 +18,27 @@ library(plyr)
 
 setwd("/home/luke/Dropbox/LIN1290/spline-ssanova")
 
-ORIGIN.X = 123.472
-ORIGIN.Y = 0
-
 #################################################################
 # CONFIGURATION! -- edit me freely!
 #################################################################
 
 speaker = "BM"
-speaker.filename = paste(speaker,"-s-sh-cart.txt",sep="")
-
-task.filter = "base"
+prefix = ""
+postfix = "-cart.txt"
+speaker.filename = paste(prefix,speaker,postfix,sep="")
 
 bp.filename = "bite-planes.txt"
+task.filter = "base"
 bp.spk.nm = paste(speaker,"-",task.filter,sep="")
 
-show.comp.cons = FALSE
+show.comp.cons = TRUE
 show.pal = TRUE
 
 colour.palate = "Dark2"
+
+# Settings from AAA
+ORIGIN.X = 123.472
+ORIGIN.Y = 0
 
 #################################################################
 # FILE I/O
@@ -76,20 +80,20 @@ rot.angle = -1 * atan(abs(bp.spk[2,"Y"]-bp.spk[1,"Y"])/(bp.spk[2,"X"]-bp.spk[1,"
 # CONVERSION TO POLAR COORDINATES
 #################################################################
 
-spk.orig.data$r = sqrt(spk.orig.data$X*spk.orig.data$X + spk.orig.data$Y*spk.orig.data$Y)
-spk.orig.data$theta = (atan(spk.orig.data$Y/(spk.orig.data$X)))
-spk.orig.data$theta = ifelse(spk.orig.data$X<0,pi-abs(spk.orig.data$theta),spk.orig.data$theta)
+spk.orig.data$R = sqrt(spk.orig.data$X*spk.orig.data$X + spk.orig.data$Y*spk.orig.data$Y)
+spk.orig.data$Theta = (atan(spk.orig.data$Y/(spk.orig.data$X)))
+spk.orig.data$Theta = ifelse(spk.orig.data$X<0,pi-abs(spk.orig.data$Theta),spk.orig.data$Theta)
 
 # Sanity check: plots the polar data on a real polar graph
 #library(plotrix)
-#polar.plot(spk.orig.data$r, NISTradianTOdeg(spk.orig.data$theta), labels="",rp.type="s",radial.lim=range(0,80))
+#polar.plot(spk.orig.data$R, NISTradianTOdeg(spk.orig.data$Theta), labels="",rp.type="s",radial.lim=range(0,80))
 
 #################################################################
 # PRE-PROCESSING & FILTERING
 #################################################################
 
 # Rotation with respect to bite plane
-spk.orig.data$theta = spk.orig.data$theta - (rot.angle)
+spk.orig.data$Theta = spk.orig.data$Theta - (rot.angle)
 
 # Extraction of palate trace data
 pal.traces = spk.orig.data[spk.orig.data$Task=="pal",]
@@ -104,35 +108,37 @@ spk.task.filt$Label = factor(spk.task.filt$Label)
 
 EPSILON = 1.0*pi/180
 
-filter.weak.rays = function(row) {
-  row.theta = as.numeric(row["theta"])
-  nrow(spk.task.filt[(spk.task.filt$theta>row.theta-EPSILON & 
-                    spk.task.filt$theta<row.theta+EPSILON & 
+find.strong.rays = function(row) {
+  row.Theta = as.numeric(row["Theta"])
+  nrow(spk.task.filt[(spk.task.filt$Theta>row.Theta-EPSILON & 
+                    spk.task.filt$Theta<row.Theta+EPSILON & 
                     spk.task.filt$Speaker==row["Speaker"] &
                     spk.task.filt$Label==row["Label"] 
                     ),]) >= 4
 }
 
-strong.rays = apply(spk.task.filt,1,filter.weak.rays)
+strong.rays = apply(spk.task.filt,1,find.strong.rays)
 
 spk.filt = na.omit(spk.task.filt[strong.rays,])
-#spk.filt$theta = as.numeric(spk.filt$theta)
+#spk.filt$Theta = as.numeric(spk.filt$Theta)
 nrow(spk.filt)
+
+spk.filt = spk.task.filt
 
 #################################################################
 # SSANOVA IN POLAR COORDINATES
 #################################################################
 
 # Creation of the SSANOVA model
-spk.model <- ssanova(r ~ Label + theta + Label:theta, data=spk.filt)
+spk.model <- ssanova(R ~ Label + Theta + Label:Theta, data=spk.filt)
 #summary(spk.model)
 
-# Generates predicted radius values for each theta-ray
-spk.new.data <- expand.grid(theta=seq(min(spk.filt$theta), max(spk.filt$theta), length.out=100), 
+# Generates predicted radius values for each Theta-ray
+spk.new.data <- expand.grid(Theta=seq(min(spk.filt$Theta), max(spk.filt$Theta), length.out=100), 
                           Label=levels(spk.filt$Label), Task=levels(spk.filt$Task)) 
-spk.new.data$r <- predict(spk.model, newdata = spk.new.data, se = T)$fit
+spk.new.data$R <- predict(spk.model, newdata = spk.new.data, se = T)$fit
 
-# Generates associated standard errors for each theta-ray 
+# Generates associated standard errors for each Theta-ray 
 spk.new.data$SE<- predict(spk.model, newdata = spk.new.data, se = T)$se.fit 
 #head(spk.new.data)
 
@@ -141,15 +147,15 @@ spk.new.data$SE<- predict(spk.model, newdata = spk.new.data, se = T)$se.fit
 #################################################################
 
 # Conversion to Cartesian for plotting purposes
-spk.new.data$X = spk.new.data$r * cos((spk.new.data$theta))
-spk.new.data$Y = spk.new.data$r * sin((spk.new.data$theta))
+spk.new.data$X = spk.new.data$R * cos((spk.new.data$Theta))
+spk.new.data$Y = spk.new.data$R * sin((spk.new.data$Theta))
 
 # Calculates Cartesian coordinates for the standard errors
 TWO.STD = 1.9545
-spk.new.data$SE.low.x = (spk.new.data$r - spk.new.data$SE*TWO.STD) * cos((spk.new.data$theta))
-spk.new.data$SE.low.y = (spk.new.data$r - spk.new.data$SE*TWO.STD) * sin((spk.new.data$theta))
-spk.new.data$SE.hi.x = (spk.new.data$r + spk.new.data$SE*TWO.STD) * cos((spk.new.data$theta))
-spk.new.data$SE.hi.y = (spk.new.data$r + spk.new.data$SE*TWO.STD) * sin((spk.new.data$theta))
+spk.new.data$SE.low.x = (spk.new.data$R - spk.new.data$SE*TWO.STD) * cos((spk.new.data$Theta))
+spk.new.data$SE.low.y = (spk.new.data$R - spk.new.data$SE*TWO.STD) * sin((spk.new.data$Theta))
+spk.new.data$SE.hi.x = (spk.new.data$R + spk.new.data$SE*TWO.STD) * cos((spk.new.data$Theta))
+spk.new.data$SE.hi.y = (spk.new.data$R + spk.new.data$SE*TWO.STD) * sin((spk.new.data$Theta))
 #head(spk.new.data)
 
 main.cons = spk.new.data[spk.new.data$Label %in% NEW.LABELS,]

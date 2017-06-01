@@ -43,8 +43,10 @@ spkCart$Y = spkCart$Y - ORIGIN.Y
 spkCart$tokID = paste(spkCart$Speaker,spkCart$Task,spkCart$Label,spkCart$TokNum,sep="-")
 
 # Renames label values
-spkCart$Label = mapvalues(spkCart$Label, from = c("s", "S", "x"), to = c("s", "ʃ", "ɕ"))
+NEW.LABELS = c("s", "ʃ", "ɕ")
+spkCart$Label = mapvalues(spkCart$Label, from = c("s", "S", "x"), to = NEW.LABELS)
 #c("[s]", "[ʃ]", "[ɕ]")
+COMP.CONS = c("t","k")
 
 # Data read-in sanity check: plots all splines. One plot per set of labels.
 myPlotCart <- ggplot(spkCart, aes(x=X, y=Y, group = tokID, colour=Label))
@@ -86,7 +88,7 @@ pal.traces = spkCart[spkCart$Task=="pal",]
 # SSANOVA IN POLAR COORDINATES
 #################################################################
 
-# Filters by task type
+# Filtering by task type
 spk.task.filt = spkCart[spkCart$Task==task.filter,]
 spk.task.filt$Task = factor(spk.task.filt$Task)
 spk.task.filt$Label = factor(spk.task.filt$Label)
@@ -119,13 +121,21 @@ spk.new.data$SE.hi.x = (spk.new.data$r + spk.new.data$SE*1.96) * cos(NISTdegTOra
 spk.new.data$SE.hi.y = (spk.new.data$r + spk.new.data$SE*1.96) * sin(NISTdegTOradian(spk.new.data$theta))
 #head(spk.new.data)
 
+main.cons = spk.new.data[spk.new.data$Label %in% NEW.LABELS,]
+comp.cons = spk.new.data[spk.new.data$Label %in% COMP.CONS,]
+
 # Plots average contours
-spkComp = ggplot(spk.new.data, aes(x = X, colour = Label))
+spkComp = ggplot(main.cons, aes(x = X, colour = Label))
 spkComp + geom_line(aes(y = Y), size=1.5, alpha=1) + 
   scale_color_brewer(type = "qual", palette = "Dark2") + ylab("") + xlab("") + 
   geom_line(aes(x=SE.hi.x, y = SE.hi.y), lty=2, alpha=1) + 
   geom_line(aes(x=SE.low.x, y = SE.low.y), lty=2, alpha=1) +
-  #geom_line(data=pal.traces,aes(pal.traces$X, y = pal.traces$Y), size=1,lty=1, alpha=1) +
+  # Draws the comparison consonants + SE range
+  geom_line(data=comp.cons,aes(x=comp.cons$X, y = comp.cons$Y), size=1,lty=1, alpha=0.4) +
+  geom_line(data=comp.cons,aes(x=SE.hi.x, y = SE.hi.y), lty=2, alpha=0.4) + 
+  geom_line(data=comp.cons,aes(x=SE.low.x, y = SE.low.y), lty=2, alpha=0.4) +
+  # Draws the palate trace
+  #geom_line(data=pal.traces,aes(x=pal.traces$X, y = pal.traces$Y), size=1,lty=1, alpha=1) +
   theme(legend.position=c(0.8, 0.3)) + theme(legend.text=element_text(size=20)) + 
   theme(legend.title=element_text(size=0))
 

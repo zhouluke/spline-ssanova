@@ -32,8 +32,8 @@ print ("\t".join(HEADER))
 for line in lines:
 
 	line = line.strip()
-	line = re.sub(r"(\s)+", r"\1", line)
 	line = re.sub(r",", r" ", line)
+	line = re.sub(r"(\s)+", r"\1", line)
 
 	if not line:
 		continue

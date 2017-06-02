@@ -20,8 +20,8 @@ setwd("/home/luke/Dropbox/LIN1290/Graphing")
 # CONFIGURATION! -- edit me freely!
 #################################################################
 
-speaker = "BM"
-task.filter = "base"
+speaker = "TP2"
+task.filter = "imit"
 
 prefix = ""
 postfix = ".txt"
@@ -32,6 +32,7 @@ bp.spk.nm = paste(speaker,"-",task.filter,sep="")
 
 show.comp.cons = TRUE
 show.pal = TRUE
+show.bp = FALSE
 
 colour.palette = "Dark2"
 MIN.PTS.PER.RAY = 4
@@ -111,9 +112,13 @@ spk.orig.data$Theta = xy.get.theta(spk.orig.data)
 bp.len.sqd = sq(bp.spk[2,"Y"]-bp.spk[1,"Y"])+sq(bp.spk[2,"X"]-bp.spk[1,"X"])
 rot.angle = acos((sq(bp.spk[2,"R"])+bp.len.sqd-sq(bp.spk[1,"R"]))/(2*bp.spk[2,"R"]*sqrt(bp.len.sqd)))-asin(bp.spk[2,"Y"]/bp.spk[2,"R"])
 
-# Rotation with respect to bite plane
+# Rotation of main with respect to bite plane
 spk.orig.data$Theta = spk.orig.data$Theta + rot.angle
+
+# Rotate the bite plane data too
 bp.spk$Theta = bp.spk$Theta + rot.angle
+bp.spk$X = rt.get.x(bp.spk)
+bp.spk$Y = rt.get.y(bp.spk)
 
 # Sanity check: plots the bite plane for this speaker 
 #library(plotrix)
@@ -186,11 +191,10 @@ main.cons = spk.new.data[spk.new.data$Label %in% NEW.LABELS,]
 comp.cons = spk.new.data[spk.new.data$Label %in% COMP.CONS,]
 
 
-
 # Plots average contours for each label
 spk.graph = ggplot(main.cons, aes(x = X, colour = Label))
 spk.graph = spk.graph + geom_line(aes(y = Y), size=1.5, alpha=1) + 
-  ylim(10,80) + xlim(-60,50) +
+  ylim(0,100) + xlim(-50,50) +
   scale_color_brewer(type = "qual", palette = colour.palette) + ylab("") + xlab("") +
   # Draws the SE range
   geom_line(aes(x=SE.hi.x, y = SE.hi.y), lty=3, alpha=1) + 
@@ -202,15 +206,21 @@ spk.graph = spk.graph + geom_line(aes(y = Y), size=1.5, alpha=1) +
   # Draws the legend
   theme(legend.position=c(0.8, 0.3)) + theme(legend.text=element_text(size=20)) + 
   theme(legend.title=element_text(size=0)) 
-  # Draws the bite plane
-  #+ geom_line(data=bp.spk,aes(x = R*cos(Theta), y = R*sin(Theta)))
   
-# Draws the comparison consonants + SE range
+# Draws the comparison consonants + their SE range
 if(show.comp.cons) {
   spk.graph = spk.graph +
-  geom_line(data=comp.cons,aes(x=X, y = Y), size=0.7, lty=1, alpha=0.5) +
-  geom_line(data=comp.cons,aes(x=SE.hi.x, y = SE.hi.y), lty=3, alpha=0.5) +
-  geom_line(data=comp.cons,aes(x=SE.low.x, y = SE.low.y), lty=3, alpha=0.5)
+  geom_line(data=comp.cons, aes(x=X, y = Y), size=0.7, lty=1, alpha=0.5) +
+  geom_line(data=comp.cons, aes(x=SE.hi.x, y = SE.hi.y), lty=3, alpha=0.5) +
+  geom_line(data=comp.cons, aes(x=SE.low.x, y = SE.low.y), lty=3, alpha=0.5)
+}
+
+# Draws the bite plane
+if(show.bp) {
+  bp.spk[,c("Task","SE","SE.low.x","SE.low.y","SE.hi.x","SE.hi.y")] = factor(c(rep(NA,nrow(bp.spk))))
+  bp.spk[,"Label"] = factor(c(rep("bite plane",nrow(bp.spk))))
+  spk.graph = spk.graph + geom_line(data=bp.spk, aes(x=X, y=Y), size=1, lty=1,alpha=0.8) + 
+    theme(legend.position=c(0.2, 0.3))
 }
 
 spk.graph

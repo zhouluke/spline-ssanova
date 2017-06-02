@@ -16,7 +16,7 @@ library(gss)
 library(NISTunits)
 library(plyr)
 
-setwd("/home/luke/Dropbox/LIN1290/spline-ssanova")
+setwd("/home/luke/Dropbox/LIN1290/Graphing")
 
 #################################################################
 # CONFIGURATION! -- edit me freely!
@@ -24,7 +24,7 @@ setwd("/home/luke/Dropbox/LIN1290/spline-ssanova")
 
 speaker = "BM"
 prefix = ""
-postfix = "-cart.txt"
+postfix = ".txt"
 speaker.filename = paste(prefix,speaker,postfix,sep="")
 
 bp.filename = "bite-planes.txt"
@@ -182,7 +182,7 @@ spk.graph = spk.graph + geom_line(aes(y = Y), size=1.5, alpha=1) +
 # Draws the comparison consonants + SE range
 if(show.comp.cons) {
   spk.graph = spk.graph +
-  geom_line(data=comp.cons,aes(x=comp.cons$X, y = comp.cons$Y), size=0.7, lty=1, alpha=1) +
+  geom_line(data=comp.cons,aes(x=X, y = Y), size=0.7, lty=1, alpha=1) +
   geom_line(data=comp.cons,aes(x=SE.hi.x, y = SE.hi.y), lty=3, alpha=1) +
   geom_line(data=comp.cons,aes(x=SE.low.x, y = SE.low.y), lty=3, alpha=1)
 }

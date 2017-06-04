@@ -20,15 +20,15 @@ setwd("/home/luke/Dropbox/LIN1290/Graphing")
 # CONFIGURATION! -- edit me freely!
 #################################################################
 
-speaker = "TP2"
-task.filter = "imit"
+speaker = "BM"
+task.filter = "base"
 
 prefix = ""
 postfix = ".txt"
 speaker.filename = paste(prefix,speaker,postfix,sep="")
 
 bp.filename = "bite-planes.txt"
-bp.spk.nm = paste(speaker,"-",task.filter,sep="")
+spk.task.str = paste(speaker,"-",task.filter,sep="")
 
 show.comp.cons = TRUE
 show.pal = TRUE
@@ -45,6 +45,11 @@ ORIGIN.Y = 0
 OLD.LABELS = c("s","S","x")
 NEW.LABELS = c("s", "ʃ", "ɕ")
 COMP.CONS = c("t","k")
+
+# Output graph dimensions
+out.width = 800
+out.height = 640
+out.res = 72
 
 #################################################################
 # HELPER FUNCTIONS
@@ -82,10 +87,13 @@ spk.orig.data$tokID = paste(spk.orig.data$Speaker,spk.orig.data$Task,spk.orig.da
 spk.orig.data$Label = mapvalues(spk.orig.data$Label, from = OLD.LABELS, to = NEW.LABELS)
 
 # Data read-in sanity check: plots all splines. One plot per set of labels.
+out.file.nm = paste(spk.task.str,"-raw.png",sep="")
+png(filename=out.file.nm,width=out.width,height=out.height,res=out.res)
 myPlotCart <- ggplot(spk.orig.data, aes(x=X, y=Y, group = tokID, colour=Label))
 myPlotCart + geom_line(aes(y=Y), alpha = 1, size=0.5) + 
   ylab("") + xlab("") + scale_color_brewer(type = "qual", palette = colour.palette) +
   facet_wrap(~ Label + Task)  + theme(legend.position="none") + theme(strip.text.x=element_text(size=30))
+dev.off()
 
 # BITE PLANE FILE IMPORT
 # Expected columns:   X   Y   Spk-Task
@@ -93,7 +101,7 @@ bp.data = read.table(bp.filename, sep="\t", header=TRUE)
 bp.data$R = xy.get.radius(bp.data)
 bp.data$Theta = xy.get.theta(bp.data)
 
-bp.spk = bp.data[bp.data$SpkTask==bp.spk.nm,]
+bp.spk = bp.data[bp.data$SpkTask==spk.task.str,]
 
 #################################################################
 # PRE-PROCESSING & FILTERING
@@ -223,7 +231,12 @@ if(show.bp) {
     theme(legend.position=c(0.2, 0.3))
 }
 
+
+# Makes the plot and saves it to disk in the cwd
+out.file.nm = paste(spk.task.str,".png",sep="")
+png(filename=out.file.nm,width=out.width,height=out.height,res=out.res)
 spk.graph
+dev.off()
   
   
 

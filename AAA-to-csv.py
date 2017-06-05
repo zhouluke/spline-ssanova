@@ -72,6 +72,9 @@ for line in lines:
 
 		continue
 
+	if "BitePlane" in line:
+		readMyCoords = False
+		continue
 
 	if readMyCoords:
 

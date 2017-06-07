@@ -123,7 +123,7 @@ do.one.spk = function(speaker,task) {
     myPlotCart = myPlotCart + geom_line(aes(y=Y), alpha = 1, size=0.5) + 
       ylab("") + xlab("") + scale_color_brewer(type = "qual", palette = colour.palette) +
       facet_wrap(~ Label + Task)  + theme(legend.position="none") + theme(strip.text.x=element_text(size=30))
-    print(myPlotCart)
+    #print(myPlotCart)
     dev.off()
     
     Sys.sleep(0)
@@ -175,12 +175,14 @@ do.one.spk = function(speaker,task) {
     # SSANOVA (in polar coordinates)
     #################################################################
     
+    spk.filt = spk.filt[order(spk.filt$Label,spk.filt$Theta),]
+    
     # Creation of the SSANOVA model
     spk.model <- ssanova(R ~ Label + Theta + Label:Theta, data=spk.filt)
     #summary(spk.model)
     
     # Generates predicted radius values for each Theta-ray
-    spk.new.data <- expand.grid(Theta=seq(min(spk.filt$Theta), max(spk.filt$Theta), length.out=1000), 
+    spk.new.data <- expand.grid(Theta=seq(min(spk.filt$Theta), max(spk.filt$Theta), length.out=50), 
                                 Label=levels(spk.filt$Label), Task=levels(spk.filt$Task)) 
     spk.new.data$R <- predict(spk.model, newdata = spk.new.data, se = T)$fit
     
@@ -207,6 +209,7 @@ do.one.spk = function(speaker,task) {
     main.cons = spk.new.data[spk.new.data$Label %in% NEW.LABELS,]
     comp.cons = spk.new.data[spk.new.data$Label %in% COMP.CONS,]
     
+    main.cons = main.cons[order(main.cons$X),]
     
     # Plots average contours for each label
     spk.graph = ggplot(main.cons, aes(x = X, colour = Label))
@@ -222,10 +225,15 @@ do.one.spk = function(speaker,task) {
     
     # Draws the comparison consonants + their SE range
     if(show.comp.cons) {
-      spk.graph = spk.graph +
-        geom_line(data=comp.cons, aes(x=X, y = Y), size=0.7, lty=1, alpha=0.5) +
-        geom_line(data=comp.cons, aes(x=SE.hi.x, y = SE.hi.y), lty=3, alpha=0.5) +
-        geom_line(data=comp.cons, aes(x=SE.low.x, y = SE.low.y), lty=3, alpha=0.5)
+      
+      comp.cons = comp.cons[order(comp.cons$X),]
+      spk.graph = spk.graph + geom_line(data=comp.cons, aes(x=X, y = Y), size=0.7, lty=1, alpha=0.5) 
+      
+      comp.cons = comp.cons[order(comp.cons$SE.hi.x),]
+      spk.graph = spk.graph + geom_line(data=comp.cons, aes(x=SE.hi.x, y = SE.hi.y), lty=3, alpha=0.5)
+      
+      comp.cons = comp.cons[order(comp.cons$SE.low.x),]
+      spk.graph = spk.graph + geom_line(data=comp.cons, aes(x=SE.low.x, y = SE.low.y), lty=3, alpha=0.5)
     }
     
     # Draws the palate trace
@@ -258,7 +266,7 @@ do.one.spk = function(speaker,task) {
 # MAIN METHOD
 #################################################################
 
-for (i in 2:8){
+for (i in 2:6){
   
   speaker = paste("TP",i,sep="")
   my.tasks = levels(orig.data[orig.data$Speaker==speaker,"Task"])
@@ -267,4 +275,7 @@ for (i in 2:8){
 }
 
 
+do.one.spk("BM","base")
+do.one.spk("TP8","base")
+do.one.spk("TP8","imit")
 

@@ -1,0 +1,72 @@
+
+numSel = numberOfSelected ("TextGrid")
+
+if numSel < 1
+	exitScript: "Please select at least one TextGrid first."
+endif
+
+writeInfoLine: "Start", tab$, "End", tab$, "COG", tab$, "Label", tab$, "FileName"
+
+# Grabs the IDs and names of all selected TextGrids
+for x to numSel
+	textgrid[x] = selected ("TextGrid", x)   
+	textgrid$[x] = selected$ ("TextGrid", x)
+endfor
+
+
+tier = 1
+
+
+for x to numSel
+
+	soundName$ = textgrid$[x] 
+
+	selectObject: textgrid[x]
+
+	n = Get number of intervals: tier
+
+	for i to n
+
+		selectObject: textgrid[x]
+		label$ = Get label of interval: tier, i
+
+		if label$ <> "" 
+			sp = Get starting point: tier, i
+			ep = Get end point: tier, i
+			dur = ep - sp
+			halfWay = sp + dur/2 
+
+			leftSel = halfWay - 0.0115
+			rightSel = halfWay + 0.0115
+
+			selectObject: "Sound " + soundName$
+			Extract part... leftSel rightSel rectangular 1.0 no
+			Rename... temp
+			select Sound temp
+
+			To Spectrum... yes
+			Filter (pass Hann band)... 500 10000 100
+
+			cog = Get centre of gravity... 2
+
+			# Outputs the results
+			appendInfoLine: fixed$(sp, 3), tab$, fixed$(ep, 3), tab$, fixed$(cog, 6), tab$, label$, tab$, textgrid$[x]
+
+			# Cleanup
+			Remove
+			#select Spectrum temp
+			#Remove
+			select Sound temp
+			Remove
+
+		endif
+  	endfor
+endfor
+
+;selectObject: sound, textgrid
+
+# Restores selections
+selectObject ( ) ; deselects all objects
+for x to numSel
+	plusObject: textgrid[x]
+endfor

@@ -30,6 +30,10 @@ for x to numSel
 		selectObject: textgrid[x]
 		label$ = Get label of interval: tier, i
 
+		while endsWith(label$, " ")
+			label$ = left$(label$,length(label$)-1)
+		endwhile
+
 		if label$ <> "" 
 			sp = Get starting point: tier, i
 			ep = Get end point: tier, i

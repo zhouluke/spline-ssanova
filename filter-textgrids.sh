@@ -17,8 +17,8 @@ do
 
 	spkCondDir="$(basename $(dirname $file))"
 
-	newName="$spkCondDir-$(head -1 $myTxt | tr -d '\n')"
-	#newName="$($newName)"
+	newName="$spkCondDir-$(head -1 $myTxt | tr -d '\n' | tr -d '\r')"
+	#newName="$(echo $newName)"
 
 	echo "Now copying $newName"
 

@@ -13,8 +13,13 @@ for x to numSel
 	textgrid$[x] = selected$ ("TextGrid", x)
 endfor
 
+# Length of analysis interval, in milliseconds!!!
+intervalLen=0.048/2
 
 tier = 1
+
+makePlots=1
+dir$="spectra"
 
 
 for x to numSel
@@ -40,8 +45,8 @@ for x to numSel
 			dur = ep - sp
 			halfWay = sp + dur/2 
 
-			leftSel = halfWay - 0.0115
-			rightSel = halfWay + 0.0115
+			leftSel = halfWay - intervalLen/2
+			rightSel = halfWay + intervalLen/2
 
 			selectObject: "Sound " + soundName$
 			Extract part... leftSel rightSel rectangular 1.0 no
@@ -55,6 +60,25 @@ for x to numSel
 
 			# Outputs the results
 			appendInfoLine: fixed$(sp, 3), tab$, fixed$(ep, 3), tab$, fixed$(cog, 6), tab$, label$, tab$, textgrid$[x]
+
+			if makePlots
+				# Draws FFT spectrum
+				Select outer viewport... 0 7.5 0 4
+	  			Black
+	  			Line width... 1
+		  		Draw... 1000 10000 0 0 yes
+   				# Draw LPC curve
+				LPC smoothing... 3 50
+	  			Red
+		  		Line width... 2
+		  		Draw... 1000 10000 0 0 no
+   				# Extra garnish
+				Marks bottom... 10 yes yes yes
+				Text top... no 'label$'
+   				# Save image & erase
+				Write to EPS file... 'dir$'/'label$'_'soundName$'.eps
+				Erase all
+			endif
 
 			# Cleanup
 			Remove

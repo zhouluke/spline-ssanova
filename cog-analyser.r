@@ -7,9 +7,9 @@ rm(list = ls())
 library(lattice)
 library(plyr)
 
-out.width = 800
-out.height = 640
-out.res = 72
+out.width = 840
+out.height = 560
+out.res = 144
 
 #############################################
 
@@ -32,7 +32,7 @@ orig.data$SpkTask = substr(orig.data$FileName, 1, regexpr('-', orig.data$FileNam
 orig.data$SpkTask = mapvalues(orig.data$SpkTask, from = c("BM1-fals"), to = c("BM1-good"))
 orig.data$Task = substr(orig.data$SpkTask, regexpr('-', orig.data$SpkTask)+1,nchar(orig.data$SpkTask))
 
-# Use fricative data only
+# Let's use fricative data only
 fric.data = orig.data[orig.data$Label %in% FRICATIVES,]
 fric.data$Task = mapvalues(fric.data$Task, from = c("good"), to = c("model"))
 fric.data$Task = factor(fric.data$Task, level=c("model","imit","base"))
@@ -59,17 +59,17 @@ std.per.spk = tapply(filt.data$COG, list(filt.data$Task, filt.data$Label, filt.d
 # Graphs
 
 filt.data$Task = factor(filt.data$Task, level=rev(c("base","imit","model")))
-png(filename="COG-task-label-hist.png",width=out.width,height=out.height,res=out.res)
+png(filename="COG-task-label-hist.png",width=out.width,height=out.height*1.3,res=out.res)
 histogram(~ COG | Label*Task, data=filt.data)
 dev.off()
 
-png(filename="COG-task-label-density.png",width=out.width,height=out.height,res=out.res)
+png(filename="COG-task-label-density.png",width=out.width,height=out.height*1.3,res=out.res)
 densityplot(~ COG | Label*Task, data=filt.data)
 dev.off()
 
 filt.data$Task = factor(filt.data$Task, level=c("base","imit","model"))
 png(filename="COG-task-label-boxplots.png",width=out.width,height=out.height,res=out.res)
-bwplot(COG~Label | Task, data=filt.data, layout=c(1,3)
+bwplot(COG~Label | Task, data=filt.data, layout=c(3,1))
 dev.off()
 
 
@@ -84,11 +84,11 @@ dev.off()
 
 # ANOVAs
 
-anova(lm(COG~Label*Task,data=no.bm))
-tapply(filt.data$COG, list(filt.data$Label), mean)
-tapply(filt.data$COG, list(filt.data$Label), sd)
-tapply(filt.data$COG, list(filt.data$Task), mean)
-tapply(filt.data$COG, list(filt.data$Task), sd)
+# anova(lm(COG~Label*Task,data=no.bm))
+# tapply(filt.data$COG, list(filt.data$Label), mean)
+# tapply(filt.data$COG, list(filt.data$Label), sd)
+# tapply(filt.data$COG, list(filt.data$Task), mean)
+# tapply(filt.data$COG, list(filt.data$Task), sd)
 
 ############################################
 

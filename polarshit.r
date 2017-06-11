@@ -214,15 +214,12 @@ do.one.spk = function(speaker,task) {
     # Plots average contours for each label
     spk.graph = ggplot(main.cons, aes(x = X, colour = Label))
     spk.graph = spk.graph + geom_line(aes(y = Y), size=1.5, alpha=1) + 
-      ylim(0,100) + xlim(-50,50) +
+      ylim(20,100) + xlim(-50,50) +
       scale_color_brewer(type = "qual", palette = colour.palette) + ylab("") + xlab("") +
       # Draws the SE range
       geom_line(aes(x=SE.hi.x, y = SE.hi.y), lty=3, alpha=1) + 
-      geom_line(aes(x=SE.low.x, y = SE.low.y), lty=3, alpha=1) +
-      # Draws the legend
-      theme(legend.position=c(0.8, 0.3)) + theme(legend.text=element_text(size=20)) + 
-      theme(legend.title=element_text(size=0)) 
-    
+      geom_line(aes(x=SE.low.x, y = SE.low.y), lty=3, alpha=1)
+      
     # Draws the comparison consonants + their SE range
     if(show.comp.cons) {
       
@@ -245,9 +242,13 @@ do.one.spk = function(speaker,task) {
     if(show.bp) {
       bp.spk[,c("Task","SE","SE.low.x","SE.low.y","SE.hi.x","SE.hi.y")] = factor(c(rep(NA,nrow(bp.spk))))
       bp.spk[,"Label"] = factor(c(rep("bite plane",nrow(bp.spk))))
-      spk.graph = spk.graph + geom_line(data=bp.spk, aes(x=X, y=Y), size=1, lty=1,alpha=0.8) + 
-        theme(legend.position=c(0.2, 0.3))
+      spk.graph = spk.graph + geom_line(data=bp.spk, aes(x=X, y=Y), size=1, lty=1,alpha=0.8) 
     }
+    
+    # Draws the legend
+    spk.graph = spk.graph + 
+      theme(legend.position=c(0.7, 0.2), legend.text=element_text(size=12), 
+            legend.direction="horizontal", legend.title=element_text(size=0)) 
     
     
     # Makes the plot and saves it to disk in the cwd
@@ -266,6 +267,11 @@ do.one.spk = function(speaker,task) {
 # MAIN METHOD
 #################################################################
 
+out.width = 640
+out.height = 0.8*640
+
+out.res = 144
+
 for (i in 2:6){
   
   speaker = paste("TP",i,sep="")
@@ -275,7 +281,8 @@ for (i in 2:6){
 }
 
 
-do.one.spk("BM","base")
 do.one.spk("TP8","base")
 do.one.spk("TP8","imit")
 
+#out.height = 640
+do.one.spk("BM","base")

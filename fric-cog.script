@@ -14,7 +14,7 @@ for x to numSel
 endfor
 
 # Length of analysis interval, in milliseconds!!!
-intervalLen=0.048/2
+intervalLen=0.023
 
 tier = 1
 

@@ -21,6 +21,7 @@ NEW.LABELS = c("s", "ʃ", "ɕ")
 
 FRICATIVES = c("s", "ʃ")
 SPEAKERS = c("BM1","TP2","TP3","TP4","TP5","TP6","TP7","TP8")
+TP.SPEAKERS = c("TP2","TP3","TP4","TP5","TP6","TP7","TP8")
 
 cog.data.filename = "cog-data.txt"
 orig.data = read.table(cog.data.filename, sep="\t", header=TRUE, strip.white=TRUE)
@@ -39,20 +40,21 @@ fric.data$Task = factor(fric.data$Task, level=c("model","imit","base"))
 
 # Filtering by speakers
 filt.data = fric.data[fric.data$Spk %in% SPEAKERS,]
+filt.data$Spk = factor(filt.data$Spk)
 filt.data$Task = factor(filt.data$Task)
 filt.data$Label = factor(filt.data$Label)
 
-no.bm = filt.data[filt.data$Spk!="BM1",]
+no.bm = filt.data[filt.data$Spk %in% TP.SPEAKERS,]
 
 #############################################
 
 # Mean CoG for each speaker + STDs
 
 means.agg = tapply(filt.data$COG, list(filt.data$Task, filt.data$Label), mean)
-std.agg = tapply(filt.data$COG, list(filt.data$Task, filt.data$Label), sd)
+sd.agg = tapply(filt.data$COG, list(filt.data$Task, filt.data$Label), sd)
 
-means.per.spk = tapply(filt.data$COG, list(filt.data$Task, filt.data$Label, filt.data$Spk), mean)
-std.per.spk = tapply(filt.data$COG, list(filt.data$Task, filt.data$Label, filt.data$Spk), sd)
+means.per.spk.task = tapply(filt.data$COG, list(filt.data$SpkTask, filt.data$Label), mean)
+sd.per.spk.task = tapply(filt.data$COG, list(filt.data$SpkTask, filt.data$Label), sd)
 
 #############################################
 
@@ -104,3 +106,23 @@ soc.fric = merge(filt.data,soc.data)
 write.table(soc.fric,file="soc-fric-data.txt",sep="\t",row.names=FALSE,quote=FALSE)
 
 # source("http://www.danielezrajohnson.com/Rbrul.R")
+
+
+
+# Between-task differences vs. social info
+
+calc.task.mean = function(spk){
+  spk.imit.mean = mean(filt.data[filt.data$Spk==spk & filt.data$Task=="imit"])
+  spk.base.mean = mean(filt.data[filt.data$Spk==spk & filt.data$Task=="base"])
+  spk.imit.mean - spk.base.mean
+}
+
+chg.per.spk = data.frame(
+  Spk = TP.SPEAKERS,
+  Chg = as.vector(sapply(TP.SPEAKERS,calc.task.mean))
+)
+
+chg.per.spk = merge(chg.per.spk,soc.data)
+
+ggplot(data=chg.per.spk,aes(x=IAT,y=Chg)) + geom_point(aes(shape=Condition)) + geom_smooth(method='lm')
+cor(x=chg.per.spk$IAT,y=chg.per.spk$Chg)

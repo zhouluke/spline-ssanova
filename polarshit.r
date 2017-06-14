@@ -20,9 +20,6 @@ setwd("/home/luke/Dropbox/LIN1290/Graphing")
 # CONFIGURATION! -- edit me freely!
 #################################################################
 
-speaker = "TP5"
-task = "imit"
-
 data.filename = "all-cart-data.txt"
 bp.filename = "bite-planes.txt"
 
@@ -213,7 +210,7 @@ do.one.spk = function(speaker,task) {
     
     # Plots average contours for each label
     spk.graph = ggplot(main.cons, aes(x = X, colour = Label))
-    spk.graph = spk.graph + geom_line(aes(y = Y), size=1.5, alpha=1) + 
+    spk.graph = spk.graph + geom_line(aes(y = Y), size=1, alpha=1) + 
       ylim(20,100) + xlim(-50,50) +
       scale_color_brewer(type = "qual", palette = colour.palette) + ylab("") + xlab("") +
       # Draws the SE range
@@ -235,14 +232,14 @@ do.one.spk = function(speaker,task) {
     
     # Draws the palate trace
     if(show.pal) {
-      spk.graph = spk.graph + geom_line(data=pal.traces,aes(x=X, y=Y), size=1,lty=1, alpha=1) 
+      spk.graph = spk.graph + geom_line(data=pal.traces,aes(x=X, y=Y), size=0.7,lty=1, alpha=1) 
   }
     
     # Draws the bite plane
     if(show.bp) {
       bp.spk[,c("Task","SE","SE.low.x","SE.low.y","SE.hi.x","SE.hi.y")] = factor(c(rep(NA,nrow(bp.spk))))
       bp.spk[,"Label"] = factor(c(rep("bite plane",nrow(bp.spk))))
-      spk.graph = spk.graph + geom_line(data=bp.spk, aes(x=X, y=Y), size=1, lty=1,alpha=0.8) 
+      spk.graph = spk.graph + geom_line(data=bp.spk, aes(x=X, y=Y), size=0.7, lty=1,alpha=0.8) 
     }
     
     # Draws the legend
@@ -285,4 +282,5 @@ do.one.spk("TP8","base")
 do.one.spk("TP8","imit")
 
 #out.height = 640
+show.pal = TRUE
 do.one.spk("BM","base")

@@ -132,10 +132,12 @@ do.one.spk = function(speaker,task) {
     bp.len.sqd = sq(bp.spk[2,"Y"]-bp.spk[1,"Y"])+sq(bp.spk[2,"X"]-bp.spk[1,"X"])
     rot.angle = acos((sq(bp.spk[2,"R"])+bp.len.sqd-sq(bp.spk[1,"R"]))/(2*bp.spk[2,"R"]*sqrt(bp.len.sqd)))-asin(bp.spk[2,"Y"]/bp.spk[2,"R"])
     
-    # Rotation of main with respect to bite plane
+    # Rotation of main data with respect to bite plane; updating the Cartesian coordinates too
     spk.orig.data$Theta = spk.orig.data$Theta + rot.angle
+    spk.orig.data$X = rt.get.x(spk.orig.data)
+    spk.orig.data$Y = rt.get.y(spk.orig.data)
     
-    # Rotate the bite plane data too
+    # Rotates the bite plane data too so it appears parallel to the horizontal when plotted
     bp.spk$Theta = bp.spk$Theta + rot.angle
     bp.spk$X = rt.get.x(bp.spk)
     bp.spk$Y = rt.get.y(bp.spk)
@@ -144,10 +146,8 @@ do.one.spk = function(speaker,task) {
     #library(plotrix)
     #polar.plot(bp.spk$"R", bp.spk$Theta*180/pi, labels="",rp.type="s",radial.lim=range(0,23))
     
-    
     # Extraction of palate trace data
     pal.traces = spk.orig.data[spk.orig.data$Task=="pal",]
-    
     
     
     # OPTIONAL FILTERING: Elimination of task-label combos having fewer than MIN.PTS.PER.RAY r-values. 
@@ -168,11 +168,18 @@ do.one.spk = function(speaker,task) {
     spk.filt = na.omit(spk.orig.data[strong.rays,])
     nrow(spk.filt)
     
+    
+    # Calculation of tongue tip angle
+    spk.filt = spk.filt[order(spk.filt$Label,spk.filt$Theta),]
+    
+    pt1 = spk.filt[spk.filt$Theta == min(spk.filt$Theta),]
+    pt2 = spk.filt[spk.filt$Theta == sort(spk.filt$Theta,partial=4)[4],]
+    
     #################################################################
     # SSANOVA (in polar coordinates)
     #################################################################
     
-    spk.filt = spk.filt[order(spk.filt$Label,spk.filt$Theta),]
+    
     
     # Creation of the SSANOVA model
     spk.model <- ssanova(R ~ Label + Theta + Label:Theta, data=spk.filt)

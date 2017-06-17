@@ -52,21 +52,28 @@ concat.data = merge(concat.data,filt.by.spk[,c("Spk","Cond","Sex","rot.tasks","I
 concat.data$spk.order = match(concat.data$Spk,SPK.ORDER)
 concat.data = concat.data[order(concat.data$spk.order),]
 
+############################################
+
 # Plots each task's RMS for each consonant pair
+
 s.sh.only = concat.data[grepl("s.sh.",concat.data$Type),]
 k.t.only = concat.data[grepl("k.t.",concat.data$Type),]
 
 
 png(filename="rms-sep-per-task-s-sh.png",width=out.width,height=out.height,res=out.res)
-ggplot(data=s.sh.only, aes(x=Spk, y=y, fill=Type, label=Spk)) +
+ggplot(data=s.sh.only, aes(x=Spk, y=y, fill=factor(Type,labels=c("baseline","shadowing")), label=Spk)) +
   geom_bar(stat="identity",position = "dodge",width=.75) +
-  facet_grid(~Cond, switch = "x", scales = "free_x", space = "free_x")
+  facet_grid(~Cond, switch = "x", scales = "free_x", space = "free_x") + 
+  xlab("Speaker") + ylab("RMSD between [s] and [ʃ] (mm)") +
+  theme(legend.title = element_blank())
 dev.off()
 
 png(filename="rms-sep-per-task-k-t.png",width=out.width,height=out.height,res=out.res)
-ggplot(data=k.t.only, aes(x=Spk, y=y, fill=Type, label=Spk)) +
+ggplot(data=k.t.only, aes(x=Spk, y=y, fill=factor(Type,labels=c("baseline","shadowing")), label=Spk)) +
   geom_bar(stat="identity",position = "dodge",width=.75) +
-  facet_grid(~Cond, switch = "x", scales = "free_x", space = "free_x")
+  facet_grid(~Cond, switch = "x", scales = "free_x", space = "free_x") +
+  xlab("Speaker") + ylab("RMSD between [k] and [t] (mm)") +
+  theme(legend.title = element_blank())
 dev.off()
 
 task.pair.rms = rbind(s.sh.only,k.t.only)

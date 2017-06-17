@@ -10,7 +10,7 @@ library(plyr)
 library(gss)
 
 out.width = 840
-out.height = 560
+out.height = 480
 out.res = 144
 
 setwd("/home/luke/Dropbox/LIN1290/Graphing")
@@ -51,8 +51,9 @@ concat.data = merge(concat.data,filt.by.spk[,c("Spk","Cond","Sex","rot.tasks","I
 # Reorders speakers for graphing
 concat.data$spk.order = match(concat.data$Spk,SPK.ORDER)
 concat.data = concat.data[order(concat.data$spk.order),]
+levels(concat.data$Sex) = c("M","F")
 
-############################################
+#################################################
 
 # Plots each task's RMS for each consonant pair
 
@@ -63,7 +64,7 @@ k.t.only = concat.data[grepl("k.t.",concat.data$Type),]
 png(filename="rms-sep-per-task-s-sh.png",width=out.width,height=out.height,res=out.res)
 ggplot(data=s.sh.only, aes(x=Spk, y=y, fill=factor(Type,labels=c("baseline","shadowing")), label=Spk)) +
   geom_bar(stat="identity",position = "dodge",width=.75) +
-  facet_grid(~Cond, switch = "x", scales = "free_x", space = "free_x") + 
+  facet_grid(~Cond+Sex, switch = "x", scales = "free_x", space = "free_x") + 
   xlab("Speaker") + ylab("RMSD between [s] and [ʃ] (mm)") +
   theme(legend.title = element_blank())
 dev.off()
@@ -71,7 +72,7 @@ dev.off()
 png(filename="rms-sep-per-task-k-t.png",width=out.width,height=out.height,res=out.res)
 ggplot(data=k.t.only, aes(x=Spk, y=y, fill=factor(Type,labels=c("baseline","shadowing")), label=Spk)) +
   geom_bar(stat="identity",position = "dodge",width=.75) +
-  facet_grid(~Cond, switch = "x", scales = "free_x", space = "free_x") +
+  facet_grid(~Cond+Sex, switch = "x", scales = "free_x", space = "free_x") +
   xlab("Speaker") + ylab("RMSD between [k] and [t] (mm)") +
   theme(legend.title = element_blank())
 dev.off()
@@ -81,15 +82,25 @@ task.pair.rms$Graph = ifelse(grepl("s.sh.",task.pair.rms$Type),"s.sh","k.t")
 
 ggplot(data=task.pair.rms, aes(x=Spk, y=y, fill=Type, label=Spk)) +
   geom_bar(stat="identity",position = "dodge",width=.75) +
-  facet_grid(~Cond, switch = "x", scales = "free_x", space = "free_x") #+
+  facet_grid(~Cond+Sex, switch = "x", scales = "free_x", space = "free_x") #+
   #facet_grid(~Graph)
 
+#################################################
 
 # Plots between-task changes for each consonant pair
-changes.only = concat.data[concat.data$type!="chg.quotient" & concat.data$type %in% c("s.sh","k.t","chg.quotient"),]
-ggplot(data=changes.only, aes(x=spk, y=y, fill=type)) +
+
+changes.only = concat.data[concat.data$Type!="chg.quotient" & concat.data$Type %in% c("s.sh","k.t","chg.quotient"),]
+
+png(filename="drmsd.png",width=out.width,height=480,res=out.res)
+ggplot(data=changes.only[changes.only$rot.tasks=="N",], aes(x=Spk, y=y, fill=factor(Type,labels=c("k vs. t","s vs. ʃ")))) +
   geom_bar(stat="identity",position = "dodge",width=.75) +
-  scale_x_discrete(limits=SPK.ORDER)
+  facet_grid(~Cond+Sex, switch = "x", scales = "free_x", space = "free_x") +
+  xlab("Speaker") + ylab("∆RMSD between baseline & shadowing (mm)") +
+  theme(legend.title = element_blank())
+dev.off()
+
+range(changes.only[changes.only$rot.tasks=="N" & changes.only$Type=="k.t","y"])
+range(changes.only[changes.only$rot.tasks=="N" & changes.only$Type=="s.sh","y"])
 
 
 per.task.data = concat.data[concat.data$type %in% c("s.sh.base","s.sh.imit","k.t.base","k.t.imit"),]

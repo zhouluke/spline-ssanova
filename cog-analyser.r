@@ -53,6 +53,16 @@ filt.data$Task = factor(filt.data$Task)
 filt.data$Label = factor(filt.data$Label)
 
 no.bm = filt.data[filt.data$Spk %in% TP.SPEAKERS,]
+no.bm$Spk = factor(no.bm$Spk)
+no.bm$Task = factor(no.bm$Task)
+no.bm$Label = factor(no.bm$Label)
+
+genders = data.frame(
+  Spk = SPEAKERS,
+  Gender = c("F","F","M","F","F","F","M","M") #,"M")
+)
+
+no.bm = merge(no.bm,genders)
 
 #############################################
 
@@ -70,7 +80,7 @@ sd.per.spk.task = tapply(filt.data$COG, list(filt.data$SpkTask, filt.data$Label)
 
 filt.data$Task = factor(filt.data$Task, level=c("baseline","shadowing","model"))
 png(filename="COG-task-label-boxplots.png",width=out.width,height=out.height,res=out.res)
-bwplot(COG~Label | Task, data=filt.data, layout=c(3,1),panel=bm.comp)
+bwplot(COG~Label | Task, data=filt.data, ylab="CoG (Hz)",layout=c(3,1),panel=bm.comp)
 dev.off()
 
 #filt.data$Task = factor(filt.data$Task, level=rev(c("base","imit","model")))
@@ -87,13 +97,15 @@ SPK.ORDER = c("BM1","TP3","TP8","TP7","TP4","TP2","TP5","TP6")
 POS.SPK = c("TP3","TP8","TP7","TP4")
 NEG.SPK = c("TP2","TP5","TP6")
 
-levels(filt.data$Spk) <- SPK.ORDER
-png(filename="COG-pos-spk-task-boxes.png",width=out.width,height=out.height,res=out.res)
-bwplot(COG~Task | Spk, data=filt.data[filt.data$Label=="s" & filt.data$Spk!="BM1",],panel=bm.comp)
+#levels(filt.data$Spk) <- SPK.ORDER
+levels(no.bm$Task) <- rev(levels(no.bm$Task))
+levels(no.bm$Label) <- rev(FRICATIVES)
+png(filename="COG-pos-spk-task-boxes.png",width=out.width,height=out.height,res=out.res/1.2)
+bwplot(COG~Task | Spk+Label, ylab="CoG (Hz)",data=no.bm[no.bm$Spk %in% POS.SPK,],panel=bm.comp)
 dev.off()
 
-png(filename="COG-neg-spk-task-boxes.png",width=out.width,height=out.height,res=out.res)
-bwplot(COG~Task | Spk, data=filt.data[filt.data$Label=="ʃ" & filt.data$Spk!="BM1",],panel=bm.comp)
+png(filename="COG-neg-spk-task-boxes.png",width=out.width,height=out.height,res=out.res/1.2)
+bwplot(COG~Task | Spk+Label, ylab="CoG (Hz)",data=no.bm[no.bm$Spk %in% NEG.SPK,],panel=bm.comp)
 dev.off()
 
 

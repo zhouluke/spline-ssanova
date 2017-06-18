@@ -51,7 +51,7 @@ concat.data = merge(concat.data,filt.by.spk[,c("Spk","Cond","Sex","rot.tasks","I
 # Reorders speakers for graphing
 concat.data$spk.order = match(concat.data$Spk,SPK.ORDER)
 concat.data = concat.data[order(concat.data$spk.order),]
-levels(concat.data$Sex) = c("M","F")
+concat.data$Sex = factor(concat.data$Sex,levels=c("M","F"))
 
 #################################################
 
@@ -100,32 +100,34 @@ ggplot(data=changes.only[changes.only$rot.tasks=="N",], aes(x=Spk, y=y, fill=fac
 dev.off()
 
 range(changes.only[changes.only$rot.tasks=="N" & changes.only$Type=="k.t","y"])
-range(changes.only[changes.only$rot.tasks=="N" & changes.only$Type=="s.sh","y"])
+range(abs(changes.only[changes.only$rot.tasks=="N" & changes.only$Type=="s.sh","y"]))
 
 
-per.task.data = concat.data[concat.data$type %in% c("s.sh.base","s.sh.imit","k.t.base","k.t.imit"),]
-per.task.data$is.base = ifelse(per.task.data$type == "s.sh.base" | per.task.data$type == "k.t.base", 0,1)
+# LINE GRAPHS
 
-s.sh.per.task.data = per.task.data[per.task.data$type %in% c("s.sh.base","s.sh.imit"),]
-k.t.per.task.data = per.task.data[per.task.data$type %in% c("k.t.base","k.t.imit"),]
+per.task.data = concat.data[concat.data$Type %in% c("s.sh.base","s.sh.imit","k.t.base","k.t.imit"),]
+per.task.data$is.base = ifelse(per.task.data$Type == "s.sh.base" | per.task.data$Type == "k.t.base", 0,1)
+
+s.sh.per.task.data = per.task.data[per.task.data$Type %in% c("s.sh.base","s.sh.imit"),]
+k.t.per.task.data = per.task.data[per.task.data$Type %in% c("k.t.base","k.t.imit"),]
 
 
-s.sh.pos = s.sh.per.task.data[s.sh.per.task.data$spk %in% POS.SPK,]
-s.sh.neg = s.sh.per.task.data[s.sh.per.task.data$spk %in% NEG.SPK,]
+s.sh.pos = s.sh.per.task.data[s.sh.per.task.data$Spk %in% POS.SPK,]
+s.sh.neg = s.sh.per.task.data[s.sh.per.task.data$Spk %in% NEG.SPK,]
 
 # +ve speakers only
 ggplot(data=s.sh.pos, 
-       aes(x=type, y=y, group=spk, shape=factor(s.sh.pos$spk))) + 
+       aes(x=Type, y=y, group=Spk, shape=factor(s.sh.pos$Spk))) + 
   geom_point() + geom_line() + theme(legend.title = element_blank())
 
 # -ve speakers only
 ggplot(data=s.sh.neg, 
-       aes(x=type, y=y, group=spk, shape=factor(s.sh.neg$spk))) + 
+       aes(x=Type, y=y, group=Spk, shape=factor(s.sh.neg$Spk))) + 
   geom_point() + geom_line() + theme(legend.title = element_blank())
 
 # Both conditions' speakers
 ggplot(data=s.sh.per.task.data, 
-       aes(x=type, y=y, group=spk, linetype=factor(s.sh.per.task.data$spk))) + 
+       aes(x=Type, y=y, group=Spk, linetype=factor(s.sh.per.task.data$Spk))) + 
   geom_point() + geom_line() + theme(legend.title = element_blank())
 
 

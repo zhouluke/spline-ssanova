@@ -6,9 +6,11 @@ rm(list = ls())
 
 library(lattice)
 library(plyr)
+library(reshape2)
 
 out.width = 840
 out.height = 560
+out.height.small = 480
 out.res = 144
 
 #############################################
@@ -21,7 +23,7 @@ NEW.LABELS = c("s", "ʃ", "ɕ")
 
 FRICATIVES = c("s", "ʃ")
 SPEAKERS = c("BM1","TP2","TP3","TP4","TP5","TP6","TP7","TP8")
-TP.SPEAKERS = SPEAKERS("TP",SPEAKERS)
+TP.SPEAKERS = SPEAKERS[grepl("TP",SPEAKERS)]
 
 bm.stim.s = 7807.109245
 bm.stim.sh = 2793.041364
@@ -74,9 +76,25 @@ sd.agg = tapply(filt.data$COG, list(filt.data$Task, filt.data$Label), sd)
 means.per.spk.task = tapply(filt.data$COG, list(filt.data$SpkTask, filt.data$Label), mean)
 sd.per.spk.task = tapply(filt.data$COG, list(filt.data$SpkTask, filt.data$Label), sd)
 
+
 #############################################
 
-# Graphs
+# Social correlations
+
+soc.data.filename = "social-data.txt"
+soc.data = read.table(soc.data.filename, sep="\t", header=TRUE, strip.white=TRUE)
+
+# Inner join: fricative data table w/ social data table
+names(soc.data)[1] <- "Spk"
+soc.fric = merge(filt.data,soc.data)
+
+write.table(soc.fric,file="soc-fric-data.txt",sep="\t",row.names=FALSE,quote=FALSE)
+
+# source("http://www.danielezrajohnson.com/Rbrul.R")
+
+############################################
+
+# Boxplots / pdfs
 
 filt.data$Task = factor(filt.data$Task, level=c("baseline","shadowing","model"))
 png(filename="COG-task-label-boxplots.png",width=out.width,height=out.height,res=out.res)
@@ -108,47 +126,21 @@ png(filename="COG-neg-spk-task-boxes.png",width=out.width,height=out.height,res=
 bwplot(COG~Task | Spk+Label, ylab="CoG (Hz)",data=no.bm[no.bm$Spk %in% NEG.SPK,],panel=bm.comp)
 dev.off()
 
-
-# ANOVAs
-
-# anova(lm(COG~Label*Task,data=no.bm))
-# tapply(filt.data$COG, list(filt.data$Label), mean)
-# tapply(filt.data$COG, list(filt.data$Label), sd)
-# tapply(filt.data$COG, list(filt.data$Task), mean)
-# tapply(filt.data$COG, list(filt.data$Task), sd)
-
 ############################################
 
-# Social correlations
-
-soc.data.filename = "social-data.txt"
-soc.data = read.table(soc.data.filename, sep="\t", header=TRUE, strip.white=TRUE)
-
-# Inner join: fricative data table w/ social data table
-names(soc.data)[1] <- "Spk"
-soc.fric = merge(filt.data,soc.data)
-
-write.table(soc.fric,file="soc-fric-data.txt",sep="\t",row.names=FALSE,quote=FALSE)
-
-# source("http://www.danielezrajohnson.com/Rbrul.R")
-
-############################################
 
 # Between-task differences vs. social info
 
 calc.task.mean = function(spk,task,label){
-  #spk.s.mean = mean(filt.data[filt.data$Spk==spk & filt.data$Task==task & filt.data$Label==label,"COG"])
-  #spk.sh.mean = mean(filt.data[filt.data$Spk==spk & filt.data$Task==task & filt.data$Label==label,"COG"])
-  #spk.s.mean - spk.sh.mean
   mean(filt.data[filt.data$Spk==spk & filt.data$Task==task & filt.data$Label==label,"COG"])
 }
 
 chg.per.spk = data.frame(
   Spk = TP.SPEAKERS,
-  s.base = as.vector(sapply(TP.SPEAKERS,function(spk) calc.task.mean(spk,"base","s") )),
-  s.imit = as.vector(sapply(TP.SPEAKERS,function(spk) calc.task.mean(spk,"imit","s") )),
-  sh.base = as.vector(sapply(TP.SPEAKERS,function(spk) calc.task.mean(spk,"base","ʃ") )),
-  sh.imit = as.vector(sapply(TP.SPEAKERS,function(spk) calc.task.mean(spk,"imit","ʃ") ))
+  s.base = as.vector(sapply(TP.SPEAKERS,function(spk) calc.task.mean(spk,"baseline","s") )),
+  s.imit = as.vector(sapply(TP.SPEAKERS,function(spk) calc.task.mean(spk,"shadowing","s") )),
+  sh.base = as.vector(sapply(TP.SPEAKERS,function(spk) calc.task.mean(spk,"baseline","ʃ") )),
+  sh.imit = as.vector(sapply(TP.SPEAKERS,function(spk) calc.task.mean(spk,"shadowing","ʃ") ))
 )
 
 chg.per.spk$s.sh.base = chg.per.spk$s.base - chg.per.spk$sh.base
@@ -157,10 +149,12 @@ chg.per.spk$Chg = chg.per.spk$s.sh.imit - chg.per.spk$s.sh.base
 
 chg.per.spk = merge(chg.per.spk,soc.data)
 
-png(filename="s-sh-chg-vs-iat.png",width=out.width,height=out.height,res=out.res)
+
+
+png(filename="s-sh-chg-vs-iat.png",width=out.width,height=out.height.small,res=out.res)
 ggplot(data=chg.per.spk,aes(x=IAT,y=Chg)) + 
   geom_point(aes(shape=Condition)) + geom_smooth(method='lm') +
-  ylab("Change in RMS (mm)") + xlab("IAT score")
+  ylab("∆CoGD(s,ʃ) (Hz)") + xlab("IAT score") + theme(legend.text=element_text(size=14))
 dev.off()
 
 cor(x=chg.per.spk$IAT,y=chg.per.spk$Chg)
@@ -168,10 +162,10 @@ cor(x=chg.per.spk$IAT,y=chg.per.spk$Chg)
 
 # Betweek-task differences vs. baseline separation of the consonants
 
-png(filename="s-sh-chg-vs-base.png",width=out.width,height=out.height,res=out.res)
+png(filename="s-sh-chg-vs-base.png",width=out.width,height=out.height.small,res=out.res)
 ggplot(data=chg.per.spk,aes(x=s.sh.base,y=Chg)) + 
   geom_point(aes(shape=Condition)) + geom_smooth(method='lm') +
-  ylab("Change in RMS (mm)") + xlab("RMS in baseline task (mm)")
+  ylab("Change in CoG (Hz)") + xlab("CoG in baseline task (Hz)")
 dev.off()
 
 cor(x=chg.per.spk$s.sh.base,y=chg.per.spk$Chg)
@@ -179,10 +173,10 @@ cor(x=chg.per.spk$s.sh.base,y=chg.per.spk$Chg)
 
 # Betweek-task differences vs. baseline separation of the consonants
 
-png(filename="s-sh-chg-vs-base-abs.png",width=out.width,height=out.height,res=out.res)
+png(filename="s-sh-chg-vs-base-abs.png",width=out.width,height=out.height.small,res=out.res)
 ggplot(data=chg.per.spk,aes(x=s.sh.base,y=abs(Chg))) + 
   geom_point(aes(shape=Condition)) + geom_smooth(method='lm') +
-  ylab("|Change in RMS (mm)|") + xlab("RMS in baseline task (mm)")
+  ylab("|Change in CoG (Hz)|") + xlab("CoG in baseline task (Hz)")
 dev.off()
 
 cor(x=chg.per.spk$s.sh.base,y=abs(chg.per.spk$Chg))
@@ -190,10 +184,10 @@ cor(x=chg.per.spk$s.sh.base,y=abs(chg.per.spk$Chg))
 
 # Imitation separation vs. baseline separation
 
-png(filename="s-sh-imit-vs-base.png",width=out.width,height=out.height,res=out.res)
+png(filename="s-sh-imit-vs-base.png",width=out.width,height=out.height.small,res=out.res)
 ggplot(data=chg.per.spk,aes(x=s.sh.base,y=s.sh.imit)) + 
   geom_point(aes(shape=Condition)) + geom_smooth(method='lm') +
-  ylab("RMS in shadowing task (mm)") + xlab("RMS in baseline task (mm)")
+  ylab("CoG in shadowing task (Hz)") + xlab("CoG in baseline task (Hz)")
 dev.off()
 
 cor(x=chg.per.spk$s.sh.base,y=chg.per.spk$s.sh.imit)
@@ -221,35 +215,79 @@ chg.per.spk$chg.sh = chg.per.spk$sh.imit - chg.per.spk$sh.base
 
 
 
-png(filename="s-dev-chg-vs-iat.png",width=out.width,height=out.height,res=out.res)
+png(filename="s-dev-chg-vs-iat.png",width=out.width,height=out.height.small,res=out.res)
 ggplot(data=chg.per.spk,aes(x=IAT,y=chg.s)) + 
   geom_point(aes(shape=Condition)) + geom_smooth(method='lm') +
-  ylab("Change in distance from BM (Hz)") + xlab("IAT score")
+  ylab("Change in distance from BM (Hz)") + xlab("IAT score") + 
+  theme(legend.text=element_text(size=14))
 dev.off()
 cor(x=chg.per.spk$IAT,y=chg.per.spk$chg.s)
 
-png(filename="sh-dev-chg-vs-iat.png",width=out.width,height=out.height,res=out.res)
+png(filename="sh-dev-chg-vs-iat.png",width=out.width,height=out.height.small,res=out.res)
 ggplot(data=chg.per.spk,aes(x=IAT,y=chg.sh)) + 
   geom_point(aes(shape=Condition)) + geom_smooth(method='lm') +
-  ylab("Change in distance from BM (Hz)") + xlab("IAT score")
+  ylab("Change in distance from BM (Hz)") + xlab("IAT score") +
+  theme(legend.text=element_text(size=14))
 dev.off()
 cor(x=chg.per.spk$IAT,y=chg.per.spk$chg.sh)
 
 
 
-png(filename="s-dev-chg-vs-base-sepn.png",width=out.width,height=out.height,res=out.res)
-plot1 = ggplot(data=chg.per.spk,aes(x=s.sh.base,y=chg.s)) + 
+png(filename="s-dev-chg-vs-base-sepn.png",width=out.width,height=out.height.small,res=out.res)
+ggplot(data=chg.per.spk,aes(x=s.sh.base,y=chg.s)) + 
   geom_point(aes(shape=Condition)) + geom_smooth(method='lm') +
-  ylab("Change in distance from BM (Hz)") + xlab("Baseline separation (Hz)") + facet_grid(. ~ sex)
+  ylab("Change in distance from BM (Hz)") + xlab("Baseline separation (Hz)") 
 dev.off()
 cor(x=chg.per.spk$s.sh.base,y=chg.per.spk$chg.s)
 
-png(filename="sh-dev-chg-vs-base-sepn.png",width=out.width,height=out.height,res=out.res)
-plot2=ggplot(data=chg.per.spk,aes(x=s.sh.base,y=chg.sh)) + 
+png(filename="sh-dev-chg-vs-base-sepn.png",width=out.width,height=out.height.small,res=out.res)
+ggplot(data=chg.per.spk,aes(x=s.sh.base,y=chg.sh)) + 
   geom_point(aes(shape=Condition)) + geom_smooth(method='lm') +
   ylab("Change in distance from BM (Hz)") + xlab("Baseline separation (Hz)")
 dev.off()
 cor(x=chg.per.spk$s.sh.base,y=chg.per.spk$chg.sh)
 
+############################################
 
 
+# Graphs: each spk's DeltaCOGD-related values
+
+concat.data = melt(chg.per.spk)
+concat.data$Condition = mapvalues(concat.data$Condition, from = c("-","+"), to = c("neg","pos"))
+concat.data$Condition = factor(concat.data$Condition, levels = c("pos","neg"))
+concat.data$Gender = factor(concat.data$Gender, levels = c("M","F"))
+
+phone.wise.chg = concat.data[concat.data$variable %in% c("chg.s","chg.sh"),]
+
+png(filename="chg-cog-phone-wise.png",width=out.width,height=out.height.small,res=out.res)
+ggplot(data=phone.wise.chg, aes(x=Spk, y=value, fill=factor(variable,labels=c("s","ʃ")), label=Spk)) +
+  geom_bar(stat="identity",position = "dodge",width=.75) +
+  xlab("Speaker") + ylab("Change in CoG (Hz)") +
+  facet_grid(~Condition+Gender, switch = "x", scales = "free_x", space = "free_x") + 
+  theme(legend.title = element_blank())
+dev.off()
+
+range(abs(phone.wise.chg[phone.wise.chg$variable=="chg.s","value"]))
+range(abs(phone.wise.chg[phone.wise.chg$variable=="chg.sh","value"]))
+
+
+pair.wise.sep = concat.data[concat.data$variable %in% c("s.sh.base","s.sh.imit"),]
+
+png(filename="chg-cog-pair-wise.png",width=out.width,height=out.height.small,res=out.res)
+ggplot(data=pair.wise.sep, aes(x=Spk, y=value, fill=factor(variable,labels=c("baseline","shadowing")), label=Spk)) +
+  geom_bar(stat="identity",position = "dodge",width=.75) +
+  xlab("Speaker") + ylab("CoG separation between s & ʃ (Hz)") +
+  facet_grid(~Condition+Gender, switch = "x", scales = "free_x", space = "free_x") + 
+  theme(legend.title = element_blank())
+dev.off()
+
+
+pair.wise.chg = concat.data[concat.data$variable == "Chg",]
+
+png(filename="chg-val-cog-pair-wise.png",width=out.width,height=out.height.small,res=out.res)
+ggplot(data=pair.wise.chg, aes(x=Spk, y=value, label=Spk)) +
+  geom_bar(stat="identity",position = "dodge",width=.75) +
+  xlab("Speaker") + ylab("∆CoGD(s,ʃ) (Hz)") +
+  facet_grid(~Condition+Gender, switch = "x", scales = "free_x", space = "free_x") + 
+  theme(legend.title = element_blank())
+dev.off()

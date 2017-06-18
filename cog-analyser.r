@@ -160,12 +160,12 @@ dev.off()
 cor(x=chg.per.spk$IAT,y=chg.per.spk$Chg)
 
 
-# Betweek-task differences vs. baseline separation of the consonants
+# Between-task (pair-wise) differences vs. baseline separation of the consonants
 
 png(filename="s-sh-chg-vs-base.png",width=out.width,height=out.height.small,res=out.res)
 ggplot(data=chg.per.spk,aes(x=s.sh.base,y=Chg)) + 
   geom_point(aes(shape=Condition)) + geom_smooth(method='lm') +
-  ylab("Change in CoG (Hz)") + xlab("CoG in baseline task (Hz)")
+  ylab("∆CoGD(s,ʃ) (Hz)") + xlab("CoGD(s,ʃ,baseline) (Hz)")
 dev.off()
 
 cor(x=chg.per.spk$s.sh.base,y=chg.per.spk$Chg)
@@ -176,7 +176,7 @@ cor(x=chg.per.spk$s.sh.base,y=chg.per.spk$Chg)
 png(filename="s-sh-chg-vs-base-abs.png",width=out.width,height=out.height.small,res=out.res)
 ggplot(data=chg.per.spk,aes(x=s.sh.base,y=abs(Chg))) + 
   geom_point(aes(shape=Condition)) + geom_smooth(method='lm') +
-  ylab("|Change in CoG (Hz)|") + xlab("CoG in baseline task (Hz)")
+  ylab("|∆CoGD(s,ʃ)| (Hz)") + xlab("CoGD(s,ʃ,baseline) (Hz)")
 dev.off()
 
 cor(x=chg.per.spk$s.sh.base,y=abs(chg.per.spk$Chg))
@@ -187,7 +187,7 @@ cor(x=chg.per.spk$s.sh.base,y=abs(chg.per.spk$Chg))
 png(filename="s-sh-imit-vs-base.png",width=out.width,height=out.height.small,res=out.res)
 ggplot(data=chg.per.spk,aes(x=s.sh.base,y=s.sh.imit)) + 
   geom_point(aes(shape=Condition)) + geom_smooth(method='lm') +
-  ylab("CoG in shadowing task (Hz)") + xlab("CoG in baseline task (Hz)")
+  ylab("CoGD(s,ʃ,shadowing) (Hz)") + xlab("CoGD(s,ʃ,baseline) (Hz)")
 dev.off()
 
 cor(x=chg.per.spk$s.sh.base,y=chg.per.spk$s.sh.imit)

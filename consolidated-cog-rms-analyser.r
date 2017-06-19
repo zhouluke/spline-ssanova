@@ -104,18 +104,41 @@ cog.data = merge(cog.data,soc.data)
 
 #########################################################################
 
-# One model for all speakers/tasks
+do.my.model <- function(formula,data){
+  
+  model = lmer(data=data,formula,REML=FALSE)
+  
+  #res = plot(fitted(model),residuals(model))
+  #hist.res = hist(residuals(model))
+  #print(hist.res)
+  return(model)
+}
 
-lmer(data=cog.data,COG~Label+Task+Sex+Cond+(1|Spk))
+compare.my.models <- function(models) {
+  combn(models,2, function(combo) { anova(combo[[1]],combo[[2]]) } , simplify=FALSE) 
+}
 
-lmer(data=cog.data,COG~Label+Task+Sex+Cond+IAT.score+(1|Spk))
+
+#########################################################################
+
+# Models over all speakers & tasks
+
+# Without random slopes
+
+models.all.cog.data = list(do.my.model(COG~Label+Task+Sex+Cond+(1|Spk),cog.data),
+                           do.my.model(COG~Label+Task+Sex+Cond+(1|Spk)+IAT.score,cog.data),
+                           do.my.model(COG~Label+Task+Sex+Cond+(1|Spk)+IAT.score+IAT.score,cog.data))
 
 
 # With random slopes
 
-lmer(data=cog.data,COG~Label+Task+Sex+Cond+(1+Task|Spk))
+models.all.cog.data = append(models.all.cog.data,list(
+  do.my.model(COG~Label+Task+Sex+Cond+(1+Task|Spk),cog.data),
+  do.my.model(COG~Label+Task+Sex+Cond+IAT.score+(1+Task|Spk),cog.data),
+  do.my.model(COG~Label*Task+Sex+Cond+IAT.score+IAT.order+(1+Task|Spk),cog.data)))
 
-lmer(data=cog.data,COG~Label+Task+Sex+Cond+IAT.score+(1+Task|Spk))
+
+summary(models.all.cog.data)
 
 #########################################################################
 
@@ -123,14 +146,36 @@ lmer(data=cog.data,COG~Label+Task+Sex+Cond+IAT.score+(1+Task|Spk))
 
 baseline.cog = cog.data[cog.data$Task=="baseline",]
 
-lmer(data=baseline.cog,COG~Label+Sex+Cond+(1|Spk))
+models.cog.baseline = list(do.my.model(COG~Label+Sex+Cond+(1+Task|Spk),baseline.cog),
+                           do.my.model(COG~Label+Sex+Cond+IAT.score+(1+Task|Spk),baseline.cog),
+                           do.my.model(COG~Label*Sex+Cond+IAT.score+IAT.order+(1+Task|Spk),baseline.cog))
 
-lmer(data=baseline.cog,COG~Label+Sex+Cond+IAT.score+(1|Spk))
 
 # Model on shadowing data only
 
 shadowing.cog = cog.data[cog.data$Task=="shadowing",]
 
-lmer(data=shadowing.cog,COG~Label+Sex+Cond+(1|Spk))
+models.cog.shadowing = list(do.my.model(COG~Label+Sex+Cond+(1+Task|Spk),shadowing.cog),
+                           do.my.model(COG~Label+Sex+Cond+IAT.score+(1+Task|Spk),shadowing.cog),
+                           do.my.model(COG~Label*Sex+Cond+IAT.score+IAT.order+(1+Task|Spk),shadowing.cog))
 
-lmer(data=shadowing.cog,COG~Label+Sex+Cond+IAT.score+(1|Spk))
+
+#########################################################################
+
+# Model on male only
+
+male.cog = cog.data[cog.data$Sex=="M",]
+
+models.cog.male = list(do.my.model(COG~Label+Sex+Cond+(1+Task|Spk),male.cog),
+                           do.my.model(COG~Label+Sex+Cond+IAT.score+(1+Task|Spk),male.cog),
+                           do.my.model(COG~Label*Sex+Cond+IAT.score+IAT.order+(1+Task|Spk),male.cog))
+
+
+# Model on shadowing data only
+
+fem.cog = cog.data[cog.data$Sex=="F",]
+
+models.cog.fem = list(do.my.model(COG~Label+Sex+Cond+(1+Task|Spk),fem.cog),
+                            do.my.model(COG~Label+Sex+Cond+IAT.score+(1+Task|Spk),fem.cog),
+                            do.my.model(COG~Label*Sex+Cond+IAT.score+IAT.order+(1+Task|Spk),fem.cog))
+

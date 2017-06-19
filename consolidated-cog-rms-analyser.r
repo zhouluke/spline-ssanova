@@ -102,9 +102,35 @@ soc.data = read.soc.data()
 cog.data = merge(cog.data,soc.data)
 
 
+#########################################################################
+
+# One model for all speakers/tasks
+
 lmer(data=cog.data,COG~Label+Task+Sex+Cond+(1|Spk))
 
 lmer(data=cog.data,COG~Label+Task+Sex+Cond+IAT.score+(1|Spk))
 
 
-lmer(data=cog.data,COG~Label+Task+Sex+Cond+(1|Spk)+(1|Label))
+# With random slopes
+
+lmer(data=cog.data,COG~Label+Task+Sex+Cond+(1+Task|Spk))
+
+lmer(data=cog.data,COG~Label+Task+Sex+Cond+IAT.score+(1+Task|Spk))
+
+#########################################################################
+
+# Model on baseline data only
+
+baseline.cog = cog.data[cog.data$Task=="baseline",]
+
+lmer(data=baseline.cog,COG~Label+Sex+Cond+(1|Spk))
+
+lmer(data=baseline.cog,COG~Label+Sex+Cond+IAT.score+(1|Spk))
+
+# Model on shadowing data only
+
+shadowing.cog = cog.data[cog.data$Task=="shadowing",]
+
+lmer(data=shadowing.cog,COG~Label+Sex+Cond+(1|Spk))
+
+lmer(data=shadowing.cog,COG~Label+Sex+Cond+IAT.score+(1|Spk))

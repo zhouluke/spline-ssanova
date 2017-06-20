@@ -7,69 +7,72 @@ rm(list = ls())
 library(lattice)
 library(plyr)
 library(reshape2)
+library(lme4)
 
-out.width = 840
-out.height = 560
-out.height.small = 480
-out.res = 144
-
-#############################################
+source('lib-fileIO.r')
 
 setwd("/home/luke/Dropbox/LIN1290/Graphing")
 
-# For renaming labels
-OLD.LABELS = c("s","S","x")
-NEW.LABELS = c("s", "ʃ", "ɕ")
 
-FRICATIVES = c("s", "ʃ")
-SPEAKERS = c("BM1","TP2","TP3","TP4","TP5","TP6","TP7","TP8","TP9")
-TP.SPEAKERS = SPEAKERS[grepl("TP",SPEAKERS)]
+############################################################
+# DATA IMPORT 
+############################################################
+
+save.constants()
+
+soc.data = read.soc.data()
+cog.data = with.bm.reorder(read.cog.data())
+
+cog.bm = cog.data[cog.data$Spk=="BM1",]
+cog.tm = no.bm.reorder(merge(cog.data[cog.data$Spk!="BM1",],soc.data))
+#write.table(cog.tm,file="soc-fric-data.txt",sep="\t",row.names=FALSE,quote=FALSE)
+
+POS.SPK = as.vector(soc.data[soc.data$Cond=="pos" & soc.data$Spk %in% TP.SPEAKERS, "Spk"])
+NEG.SPK = as.vector(soc.data[soc.data$Cond=="neg" & soc.data$Spk %in% TP.SPEAKERS, "Spk"])
+
+############################################################
+# AGGREGATE BOXPLOTS 
+############################################################
 
 bm.stim.s = 7807.109245
 bm.stim.sh = 2793.041364
-bm.comp = function(...) {
+panel.bm.comp = function(...) {
   panel.abline(h=c(bm.stim.sh,bm.stim.s), col="black",lty=2,alpha=0.7)
   panel.bwplot(...)
 }
 
+png(filename="COG-task-label-boxplots.png",width=out.width,height=out.height,res=out.res)
+bwplot(COG~Label | Task, data=cog.data, ylab="CoG (Hz)",layout=c(3,1),panel=panel.bm.comp)
+dev.off()
 
-cog.data.filename = "cog-data.txt"
-orig.data = read.table(cog.data.filename, sep="\t", header=TRUE, strip.white=TRUE)
+levels(cog.data$Task) <- rev(levels(cog.data$Task))
+png(filename="COG-task-label-hist.png",width=out.width,height=out.height*1.3,res=out.res)
+histogram(~ COG | Label*Task, data=cog.data)
+dev.off()
 
-# Revaluing & separation of long description strings
-orig.data$Label = mapvalues(orig.data$Label, from = OLD.LABELS, to = NEW.LABELS)
-orig.data$Spk = substr(orig.data$FileName, 1, regexpr('-', orig.data$FileName)-1)
-orig.data$SpkTask = substr(orig.data$FileName, 1, regexpr('-', orig.data$FileName)+4)
-orig.data$SpkTask = mapvalues(orig.data$SpkTask, from = c("BM1-fals"), to = c("BM1-good"))
-orig.data$Task = substr(orig.data$SpkTask, regexpr('-', orig.data$SpkTask)+1,nchar(orig.data$SpkTask))
+png(filename="COG-task-label-density.png",width=out.width,height=out.height*1.3,res=out.res)
+densityplot(~ COG | Label*Task, data=cog.data)
+dev.off()
+levels(cog.data$Task) <- rev(levels(cog.data$Task))
 
-# Let's use fricative data only
-fric.data = orig.data[orig.data$Label %in% FRICATIVES,]
-fric.data$Task = mapvalues(fric.data$Task, from = c("good","base","imit"), to = c("model","baseline","shadowing"))
-fric.data$Task = factor(fric.data$Task, level=c("model","shadowing","baseline"))
+############################################################
+# PER SPEAKER BOXPLOTS
+############################################################
 
-# Filtering by speakers
-filt.data = fric.data[fric.data$Spk %in% SPEAKERS,]
-filt.data$Spk = factor(filt.data$Spk)
-filt.data$Task = factor(filt.data$Task)
-filt.data$Label = factor(filt.data$Label)
+levels(cog.tm$Label) <- rev(levels(cog.tm$Label))
+png(filename="COG-pos-spk-task-boxes.png",width=out.width,height=out.height,res=out.res/1.2)
+bwplot(COG~Task | Spk+Label, ylab="CoG (Hz)",data=cog.tm[cog.tm$Spk %in% POS.SPK,],panel=panel.bm.comp)
+dev.off()
 
-no.bm = filt.data[filt.data$Spk %in% TP.SPEAKERS,]
-no.bm$Spk = factor(no.bm$Spk)
-no.bm$Task = factor(no.bm$Task)
-no.bm$Label = factor(no.bm$Label)
-
-genders = data.frame(
-  Spk = SPEAKERS,
-  Gender = c("F","F","M","F","F","F","M","M","M")
-)
-
-no.bm = merge(no.bm,genders)
+png(filename="COG-neg-spk-task-boxes.png",width=out.width,height=out.height,res=out.res/1.2)
+bwplot(COG~Task | Spk+Label, ylab="CoG (Hz)",data=cog.tm[cog.tm$Spk %in% NEG.SPK,],panel=panel.bm.comp)
+dev.off()
+levels(cog.tm$Label) <- rev(levels(cog.tm$Label))
 
 
-#############################################
-
+############################################################
 # Mean CoG for each speaker + STDs
+############################################################
 
 means.agg = tapply(filt.data$COG, list(filt.data$Task, filt.data$Label), mean)
 sd.agg = tapply(filt.data$COG, list(filt.data$Task, filt.data$Label), sd)
@@ -78,70 +81,21 @@ means.per.spk.task = tapply(filt.data$COG, list(filt.data$SpkTask, filt.data$Lab
 sd.per.spk.task = tapply(filt.data$COG, list(filt.data$SpkTask, filt.data$Label), sd)
 
 
-#############################################
 
-# Social correlations
-
-soc.data.filename = "social-data.txt"
-soc.data = read.table(soc.data.filename, sep="\t", header=TRUE, strip.white=TRUE)
-
-# Inner join: fricative data table w/ social data table
-names(soc.data)[1] <- "Spk"
-soc.fric = merge(filt.data,soc.data)
-
-write.table(soc.fric,file="soc-fric-data.txt",sep="\t",row.names=FALSE,quote=FALSE)
-
-# source("http://www.danielezrajohnson.com/Rbrul.R")
-
-############################################
-
-# Boxplots / pdfs
-
-filt.data$Task = factor(filt.data$Task, level=c("baseline","shadowing","model"))
-png(filename="COG-task-label-boxplots.png",width=out.width,height=out.height,res=out.res)
-bwplot(COG~Label | Task, data=filt.data, ylab="CoG (Hz)",layout=c(3,1),panel=bm.comp)
-dev.off()
-
-#filt.data$Task = factor(filt.data$Task, level=rev(c("base","imit","model")))
-png(filename="COG-task-label-hist.png",width=out.width,height=out.height*1.3,res=out.res)
-histogram(~ COG | Label*Task, data=filt.data)
-dev.off()
-
-png(filename="COG-task-label-density.png",width=out.width,height=out.height*1.3,res=out.res)
-densityplot(~ COG | Label*Task, data=filt.data)
-dev.off()
-
-
-SPK.ORDER = c("BM1","TP3","TP8","TP7","TP4","TP9","TP2","TP5","TP6")
-POS.SPK = c("TP3","TP8","TP7","TP4")
-NEG.SPK = c("TP2","TP5","TP6","TP9")
-
-#levels(filt.data$Spk) <- SPK.ORDER
-levels(no.bm$Task) <- rev(levels(no.bm$Task))
-levels(no.bm$Label) <- rev(FRICATIVES)
-png(filename="COG-pos-spk-task-boxes.png",width=out.width,height=out.height,res=out.res/1.2)
-bwplot(COG~Task | Spk+Label, ylab="CoG (Hz)",data=no.bm[no.bm$Spk %in% POS.SPK,],panel=bm.comp)
-dev.off()
-
-png(filename="COG-neg-spk-task-boxes.png",width=out.width,height=out.height,res=out.res/1.2)
-bwplot(COG~Task | Spk+Label, ylab="CoG (Hz)",data=no.bm[no.bm$Spk %in% NEG.SPK,],panel=bm.comp)
-dev.off()
-
-############################################
-
-
+############################################################
 # Between-task differences vs. social info
+############################################################
 
-calc.task.mean = function(spk,task,label){
-  mean(filt.data[filt.data$Spk==spk & filt.data$Task==task & filt.data$Label==label,"COG"])
+calc.task.mean = function(df,spk,task,label){
+  mean(filt.data[df$Spk==spk & df$Task==task & df$Label==label,"COG"])
 }
 
 chg.per.spk = data.frame(
   Spk = TP.SPEAKERS,
-  s.base = as.vector(sapply(TP.SPEAKERS,function(spk) calc.task.mean(spk,"baseline","s") )),
-  s.imit = as.vector(sapply(TP.SPEAKERS,function(spk) calc.task.mean(spk,"shadowing","s") )),
-  sh.base = as.vector(sapply(TP.SPEAKERS,function(spk) calc.task.mean(spk,"baseline","ʃ") )),
-  sh.imit = as.vector(sapply(TP.SPEAKERS,function(spk) calc.task.mean(spk,"shadowing","ʃ") ))
+  s.base = as.vector(sapply(TP.SPEAKERS,function(spk) calc.task.mean(cog.tm,spk,"baseline","s") )),
+  s.imit = as.vector(sapply(TP.SPEAKERS,function(spk) calc.task.mean(cog.tm,spk,"shadowing","s") )),
+  sh.base = as.vector(sapply(TP.SPEAKERS,function(spk) calc.task.mean(cog.tm,spk,"baseline",SH) )),
+  sh.imit = as.vector(sapply(TP.SPEAKERS,function(spk) calc.task.mean(cog.tm,spk,"shadowing",SH) ))
 )
 
 chg.per.spk$s.sh.base = chg.per.spk$s.base - chg.per.spk$sh.base

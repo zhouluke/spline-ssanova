@@ -7,122 +7,35 @@ rm(list = ls())
 library(lattice)
 library(plyr)
 library(reshape2)
-
 library(lme4)
 
-out.width = 840
-out.height = 560
-out.height.small = 480
-out.res = 144
+source('lib-fileIO.r')
 
 setwd("/home/luke/Dropbox/LIN1290/Graphing")
 
 ############################################################
-
-# For renaming labels
-OLD.LABELS = c("s","S","x")
-SH = "ʃ"
-C = "ɕ"
-NEW.LABELS = c("s", SH, C)
-
-FRICATIVES = c("s", SH)
-SPEAKERS = c("BM1","TP2","TP3","TP4","TP5","TP6","TP7","TP8","TP9")
-TP.SPEAKERS = SPEAKERS[grepl("TP",SPEAKERS)]
-
-############################################################
-# DATA IMPORT HELPER FUNCTIONS
+# DATA IMPORT 
 ############################################################
 
-cog.data.filename = "cog-data.txt"
-rms.data.filename = "rms-data.txt"
-soc.data.filename = "social-data.txt"
+save.constants()
 
-read.cog.data = function(){ 
-  
-  orig.data = read.table(cog.data.filename, sep="\t", header=TRUE, strip.white=TRUE)
-  
-  # Drops start & end times from Praat
-  orig.data = orig.data[,!(names(orig.data) %in% c("Start","End"))]
-  
-  # Revaluing & separation of long description strings
-  orig.data$Label = mapvalues(orig.data$Label, from = OLD.LABELS, to = NEW.LABELS)
-  orig.data$Spk = substr(orig.data$FileName, 1, regexpr('-', orig.data$FileName)-1)
-  orig.data$SpkTask = substr(orig.data$FileName, 1, regexpr('-', orig.data$FileName)+4)
-  orig.data$SpkTask = mapvalues(orig.data$SpkTask, from = c("BM1-fals"), to = c("BM1-good"))
-  orig.data$Task = substr(orig.data$SpkTask, regexpr('-', orig.data$SpkTask)+1,nchar(orig.data$SpkTask))
-  
-  # Let's use fricative data only
-  fric.data = orig.data[orig.data$Label %in% FRICATIVES,]
-  fric.data$Task = mapvalues(fric.data$Task, from = c("good","base","imit"), to = c("model","baseline","shadowing"))
-  fric.data$Task = factor(fric.data$Task, level=c("model","shadowing","baseline"))
-  
-  # Filtering by speakers
-  filt.data = fric.data[fric.data$Spk %in% SPEAKERS,]
-  filt.data$Spk = factor(filt.data$Spk)
-  filt.data$Task = factor(filt.data$Task)
-  filt.data$Label = factor(filt.data$Label)
-  
-  return(filt.data)
-}
-
-read.rms.data = function(){
-  
-  orig.data = read.table(rms.data.filename, sep="\t", header=TRUE)
-  
-  filt.by.spk = orig.data[orig.data$Spk %in% SPEAKERS,]
-  filt.by.spk$s.sh.tasks = filt.by.spk$s.sh.imit - filt.by.spk$s.sh.base
-  filt.by.spk$k.t.tasks = filt.by.spk$k.t.imit - filt.by.spk$k.t.base
-  filt.by.spk$chg.quotient = abs(filt.by.spk$s.sh.tasks / filt.by.spk$k.t.tasks)
-  
-  filt.by.spk$Cond <- factor(filt.by.spk$Cond, levels = c("pos","neg"))
-  
-  NUM.SPK = length(SPEAKERS)
-  
-  concat.data = melt(filt.by.spk, 
-                     id.vars=c("Spk","Cond","Sex","rot.tasks","IAT.id","IAT.score"),
-                     variable.name="Type", value.name="y")
-  
-  return(concat.data)
-}
-
-read.soc.data = function(){
-  
-  soc.data = read.table(soc.data.filename, sep="\t", header=TRUE, strip.white=TRUE)
-  
-  # Inner join: fricative data table w/ social data table
-  names(soc.data) <- c("Spk","IAT.score","Sex","Cond","IAT.order")
-  
-  soc.data$Cond = mapvalues(soc.data$Cond, from = c("+","-"), to = c("pos","neg"))
-  
-  return(soc.data)
-}
-
-cog.data = read.cog.data()
 rms.data = read.rms.data()
 soc.data = read.soc.data()
+cog.data = with.bm.reorder(read.cog.data())
 
 cog.bm = cog.data[cog.data$Spk=="BM1",]
-cog.data = merge(cog.data,soc.data)
-write.table(cog.data,file="soc-fric-data.txt",sep="\t",row.names=FALSE,quote=FALSE)
+cog.tm = no.bm.reorder(merge(cog.data[cog.data$Spk!="BM1",],soc.data))
+write.table(cog.tm,file="soc-fric-data.txt",sep="\t",row.names=FALSE,quote=FALSE)
+
+POS.SPK = as.vector(soc.data[soc.data$Cond=="pos" & soc.data$Spk %in% TP.SPEAKERS, "Spk"])
+NEG.SPK = as.vector(soc.data[soc.data$Cond=="neg" & soc.data$Spk %in% TP.SPEAKERS, "Spk"])
 
 
-#########################################################################
-
-bm.stim.s = 7807.109245
-bm.stim.sh = 2793.041364
-bm.comp = function(...) {
-  panel.abline(h=c(bm.stim.sh,bm.stim.s), col="black",lty=2,alpha=0.7)
-  panel.bwplot(...)
-}
-
-cog.data$Task = factor(cog.data$Task, level=c("baseline","shadowing","model"))
-png(filename="COG-task-label-boxplots.png",width=out.width,height=out.height,res=out.res)
-bwplot(COG~Label | Task, data=cog.data, ylab="CoG (Hz)",layout=c(3,1),panel=bm.comp)
-dev.off()
 
 
-#########################################################################
-
+############################################################
+# LINEAR MIXED FX MODELS
+############################################################
 
 do.my.model <- function(formula,data){
   
@@ -138,6 +51,12 @@ compare.my.models <- function(models) {
   combn(models,2, function(combo) { anova(combo[[1]],combo[[2]]) } , simplify=FALSE) 
 }
 
+compare <- function(models) {
+  combn(models,2, function(combo) { 
+    anova(do.my.model(combo[[1]]),do.my.model(combo[[2]])) } 
+    ,simplify=FALSE) 
+}
+
 
 #########################################################################
 
@@ -145,52 +64,66 @@ compare.my.models <- function(models) {
 
 # Without random slopes
 
-models.all.cog.data.no.slopes = list(do.my.model(COG~Label+Task+Sex+Cond+(1|Spk),cog.data),
-                           do.my.model(COG~Label+Task+Sex+Cond+(1|Spk)+IAT.score,cog.data),
-                           do.my.model(COG~Label+Task+Sex+Cond+(1|Spk)+IAT.score+IAT.order,cog.data))
-
-compare.my.models(models.all.cog.data.no.slopes)
+models.all.cog.data.no.slopes = list(do.my.model(COG~Label+Task+Sex+Cond+(1|Spk),cog.tm),
+                           do.my.model(COG~Label+Task+Sex+Cond+(1|Spk)+IAT.score,cog.tm),
+                           do.my.model(COG~Label+Task+Sex+Cond+(1|Spk)+IAT.score+IAT.order,cog.tm))
+compare.my.models(models.all.cog.data.no.slopes) # no sig. improvements
 
 # With random slopes
 
 models.all.cog.data = list(
-  do.my.model(COG~Label+Task+Sex+Cond+(1+Task|Spk),cog.data),
-  do.my.model(COG~Label+Task+Sex+Cond+IAT.score+(1+Task|Spk),cog.data),
-  do.my.model(COG~Label*Task+Sex+Cond+IAT.score+IAT.order+(1+Task|Spk),cog.data))
-
+  do.my.model(COG~Label+Task+Sex+Cond+(1+Task|Spk),cog.tm),
+  do.my.model(COG~Label+Task+Sex+Cond+IAT.score+(1+Task|Spk),cog.tm),
+  do.my.model(COG~Label*Task+Sex+Cond+IAT.score+IAT.order+(1+Task|Spk),cog.tm))
 summary(models.all.cog.data)
-compare.my.models(models.all.cog.data)
+compare.my.models(models.all.cog.data) # no sig. improvements
 
-# w/o random slopes vs. with
+# w/o random slopes vs. with --> random slopes give major improvements
 compare.my.models(list(models.all.cog.data.no.slopes[[1]],models.all.cog.data[[1]]))
 
-
 # Without sex
-models.all.cog.data.no.sex = list(do.my.model(COG~Label+Task+Cond+(1|Spk),cog.data),
-                                     do.my.model(COG~Label+Task+Cond+(1|Spk)+IAT.score,cog.data),
-                                     do.my.model(COG~Label+Task+Cond+(1|Spk)+IAT.score+IAT.order,cog.data))
-compare.my.models(models.all.cog.data.no.sex)
+models.all.cog.data.no.sex = list(do.my.model(COG~Label+Task+Cond+(1|Spk),cog.tm),
+                                     do.my.model(COG~Label+Task+Cond+(1|Spk)+IAT.score,cog.tm),
+                                     do.my.model(COG~Label+Task+Cond+(1|Spk)+IAT.score+IAT.order,cog.tm),
+                                  do.my.model(COG~Label+Task+Cond+(1+Task|Spk),cog.tm),
+                                  do.my.model(COG~Label+Task+Cond+(1+Task|Spk)+IAT.score,cog.tm),
+                                  do.my.model(COG~Label+Task+Cond+(1+Task|Spk)+IAT.score+IAT.order,cog.tm))
+compare.my.models(models.all.cog.data.no.sex) # --> random slopes give major improvements
 
+compare.my.models(list(models.all.cog.data[[1]],models.all.cog.data.no.sex[[4]])) # dropping sex approaches beting better
+compare.my.models(list(models.all.cog.data[[2]],models.all.cog.data.no.sex[[5]])) # better with sex -- sig.
+compare.my.models(list(models.all.cog.data[[3]],models.all.cog.data.no.sex[[6]])) # not much better with sex
 
+# winner up to here (roughly): models.all.cog.data[[2]]; i.e., COG~Label+Task+Sex+Cond+IAT.score+(1+Task|Spk)
+
+winner.no.reml = models.all.cog.data[[2]]
+winner = lmer(COG~Label+Task+Sex+Cond+IAT.score+(1+Task|Spk),data=cog.tm,REML=TRUE)
+stargazer(winner,digit.separator="")
+
+#competitors = list(COG~Label+Task+Sex+Cond+IAT.score+(1+Task|Spk)+(1+Label|Spk),
+                   COG~Label+Task+Sex+Cond+IAT.score+(1+Task|Spk)+(1+Label|Spk)+(1+Cond|Spk))
+#compare(competitors)
+#compare.my.models(list(winner.no.reml,competitor)) # major improvement!
 
 #########################################################################
 
 # Model on baseline data only
 
-baseline.cog = cog.data[cog.data$Task=="baseline",]
+baseline.cog = cog.tm[cog.tm$Task=="baseline",]
 
-models.cog.baseline = list(do.my.model(COG~Label+Sex+Cond+(1+Task|Spk),baseline.cog),
-                           do.my.model(COG~Label+Sex+Cond+IAT.score+(1+Task|Spk),baseline.cog),
-                           do.my.model(COG~Label*Sex+Cond+IAT.score+IAT.order+(1+Task|Spk),baseline.cog))
-
+models.cog.baseline = list(do.my.model(COG~Label+Sex+(1|Spk),baseline.cog),
+                           do.my.model(COG~Label+(1|Spk),baseline.cog),
+                           do.my.model(COG~Label+Sex+(1+Label|Spk),baseline.cog),
+                           do.my.model(COG~Label+(1+Label|Spk),baseline.cog))
+compare.my.models(models.cog.baseline) # major improvement with random slopes
 
 # Model on shadowing data only
 
-shadowing.cog = cog.data[cog.data$Task=="shadowing",]
+shadowing.cog = cog.tm[cog.tm$Task=="shadowing",]
 
-models.cog.shadowing = list(do.my.model(COG~Label+Sex+Cond+(1+Task|Spk),shadowing.cog),
-                           do.my.model(COG~Label+Sex+Cond+IAT.score+(1+Task|Spk),shadowing.cog),
-                           do.my.model(COG~Label*Sex+Cond+IAT.score+IAT.order+(1+Task|Spk),shadowing.cog))
+models.cog.shadowing = list(do.my.model(COG~Label+Sex+Cond+(1|Spk),shadowing.cog),
+                           do.my.model(COG~Label+Sex+Cond+IAT.score+(1|Spk),shadowing.cog),
+                           do.my.model(COG~Label*Sex+Cond+IAT.score+IAT.order+(1|Spk),shadowing.cog))
 
 
 #########################################################################

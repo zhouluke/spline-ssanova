@@ -22,7 +22,7 @@ OLD.LABELS = c("s","S","x")
 NEW.LABELS = c("s", "ʃ", "ɕ")
 
 FRICATIVES = c("s", "ʃ")
-SPEAKERS = c("BM1","TP2","TP3","TP4","TP5","TP6","TP7","TP8")
+SPEAKERS = c("BM1","TP2","TP3","TP4","TP5","TP6","TP7","TP8","TP9")
 TP.SPEAKERS = SPEAKERS[grepl("TP",SPEAKERS)]
 
 bm.stim.s = 7807.109245
@@ -61,10 +61,11 @@ no.bm$Label = factor(no.bm$Label)
 
 genders = data.frame(
   Spk = SPEAKERS,
-  Gender = c("F","F","M","F","F","F","M","M") #,"M")
+  Gender = c("F","F","M","F","F","F","M","M","M")
 )
 
 no.bm = merge(no.bm,genders)
+
 
 #############################################
 
@@ -111,9 +112,9 @@ densityplot(~ COG | Label*Task, data=filt.data)
 dev.off()
 
 
-SPK.ORDER = c("BM1","TP3","TP8","TP7","TP4","TP2","TP5","TP6")
+SPK.ORDER = c("BM1","TP3","TP8","TP7","TP4","TP9","TP2","TP5","TP6")
 POS.SPK = c("TP3","TP8","TP7","TP4")
-NEG.SPK = c("TP2","TP5","TP6")
+NEG.SPK = c("TP2","TP5","TP6","TP9")
 
 #levels(filt.data$Spk) <- SPK.ORDER
 levels(no.bm$Task) <- rev(levels(no.bm$Task))

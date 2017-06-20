@@ -26,9 +26,11 @@ C = "ɕ"
 NEW.LABELS = c("s", SH, C)
 
 FRICATIVES = c("s", SH)
-SPEAKERS = c("BM1","TP2","TP3","TP4","TP5","TP6","TP7","TP8")
+SPEAKERS = c("BM1","TP2","TP3","TP4","TP5","TP6","TP7","TP8","TP9")
 TP.SPEAKERS = SPEAKERS[grepl("TP",SPEAKERS)]
 
+############################################################
+# DATA IMPORT HELPER FUNCTIONS
 ############################################################
 
 cog.data.filename = "cog-data.txt"
@@ -99,10 +101,28 @@ cog.data = read.cog.data()
 rms.data = read.rms.data()
 soc.data = read.soc.data()
 
+cog.bm = cog.data[cog.data$Spk=="BM1",]
 cog.data = merge(cog.data,soc.data)
+write.table(cog.data,file="soc-fric-data.txt",sep="\t",row.names=FALSE,quote=FALSE)
 
 
 #########################################################################
+
+bm.stim.s = 7807.109245
+bm.stim.sh = 2793.041364
+bm.comp = function(...) {
+  panel.abline(h=c(bm.stim.sh,bm.stim.s), col="black",lty=2,alpha=0.7)
+  panel.bwplot(...)
+}
+
+cog.data$Task = factor(cog.data$Task, level=c("baseline","shadowing","model"))
+png(filename="COG-task-label-boxplots.png",width=out.width,height=out.height,res=out.res)
+bwplot(COG~Label | Task, data=cog.data, ylab="CoG (Hz)",layout=c(3,1),panel=bm.comp)
+dev.off()
+
+
+#########################################################################
+
 
 do.my.model <- function(formula,data){
   
@@ -125,20 +145,33 @@ compare.my.models <- function(models) {
 
 # Without random slopes
 
-models.all.cog.data = list(do.my.model(COG~Label+Task+Sex+Cond+(1|Spk),cog.data),
+models.all.cog.data.no.slopes = list(do.my.model(COG~Label+Task+Sex+Cond+(1|Spk),cog.data),
                            do.my.model(COG~Label+Task+Sex+Cond+(1|Spk)+IAT.score,cog.data),
-                           do.my.model(COG~Label+Task+Sex+Cond+(1|Spk)+IAT.score+IAT.score,cog.data))
+                           do.my.model(COG~Label+Task+Sex+Cond+(1|Spk)+IAT.score+IAT.order,cog.data))
 
+compare.my.models(models.all.cog.data.no.slopes)
 
 # With random slopes
 
-models.all.cog.data = append(models.all.cog.data,list(
+models.all.cog.data = list(
   do.my.model(COG~Label+Task+Sex+Cond+(1+Task|Spk),cog.data),
   do.my.model(COG~Label+Task+Sex+Cond+IAT.score+(1+Task|Spk),cog.data),
-  do.my.model(COG~Label*Task+Sex+Cond+IAT.score+IAT.order+(1+Task|Spk),cog.data)))
-
+  do.my.model(COG~Label*Task+Sex+Cond+IAT.score+IAT.order+(1+Task|Spk),cog.data))
 
 summary(models.all.cog.data)
+compare.my.models(models.all.cog.data)
+
+# w/o random slopes vs. with
+compare.my.models(list(models.all.cog.data.no.slopes[[1]],models.all.cog.data[[1]]))
+
+
+# Without sex
+models.all.cog.data.no.sex = list(do.my.model(COG~Label+Task+Cond+(1|Spk),cog.data),
+                                     do.my.model(COG~Label+Task+Cond+(1|Spk)+IAT.score,cog.data),
+                                     do.my.model(COG~Label+Task+Cond+(1|Spk)+IAT.score+IAT.order,cog.data))
+compare.my.models(models.all.cog.data.no.sex)
+
+
 
 #########################################################################
 

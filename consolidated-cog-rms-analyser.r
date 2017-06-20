@@ -101,7 +101,7 @@ winner = lmer(COG~Label+Task+Sex+Cond+IAT.score+(1+Task|Spk),data=cog.tm,REML=TR
 stargazer(winner,digit.separator="")
 
 #competitors = list(COG~Label+Task+Sex+Cond+IAT.score+(1+Task|Spk)+(1+Label|Spk),
-                   COG~Label+Task+Sex+Cond+IAT.score+(1+Task|Spk)+(1+Label|Spk)+(1+Cond|Spk))
+                   #COG~Label+Task+Sex+Cond+IAT.score+(1+Task|Spk)+(1+Label|Spk)+(1+Cond|Spk))
 #compare(competitors)
 #compare.my.models(list(winner.no.reml,competitor)) # major improvement!
 

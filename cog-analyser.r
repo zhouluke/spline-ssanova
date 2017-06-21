@@ -8,6 +8,7 @@ library(lattice)
 library(plyr)
 library(reshape2)
 library(lme4)
+library(ggplot2)
 
 setwd("/home/luke/Dropbox/LIN1290/Graphing")
 
@@ -26,7 +27,13 @@ panel.bm.comp = function(...) {
 }
 
 png(filename="COG-task-label-boxplots.png",width=out.width,height=out.height,res=out.res)
-bwplot(COG~Label | Task, data=cog.data, ylab="CoG (Hz)",layout=c(3,1),panel=panel.bm.comp)
+#bwplot(COG~Label | Task, data=cog.data, ylab="CoG (Hz)",layout=c(3,1),panel=panel.bm.comp)
+ggplot(cog.data, aes(x=Task, y=COG, fill=Label)) + geom_boxplot() +
+  ylab("CoG (Hz)") + scale_color_brewer(palette = colour.palette) +
+  stat_summary(fun.y=mean, geom="point", shape=5, size=3,position=position_dodge(width=0.75)) +
+  theme(legend.title=element_blank()) +
+  geom_hline(aes(yintercept=bm.stim.s), linetype="dashed") +
+  geom_hline(aes(yintercept=bm.stim.sh), linetype="dashed")
 dev.off()
 
 levels(cog.data$Task) <- rev(levels(cog.data$Task))

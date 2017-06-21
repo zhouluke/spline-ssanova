@@ -8,7 +8,8 @@ library(lattice)
 library(plyr)
 library(reshape2)
 library(lme4)
-
+#library(lmerTest)
+library(stargazer)
 
 setwd("/home/luke/Dropbox/LIN1290/Graphing")
 
@@ -34,9 +35,7 @@ compare.my.models <- function(models) {
 }
 
 compare <- function(data,models) {
-  combn(models,2, function(combo) { 
-    anova(do.my.model(data,combo[[1]]),do.my.model(data,combo[[2]])) } 
-    ,simplify=FALSE) 
+  compare.my.models(lapply(models,function(m){do.my.model(data,m,REML=FALSE)} )) 
 }
 
 residual.scat.plot = function(model){
@@ -108,14 +107,18 @@ compare(cog.tm,competitors) # major improvement!
 
 baseline.cog = cog.tm[cog.tm$Task=="baseline",]
 
-models.cog.baseline = list(#COG~Label+Sex+(1|Spk),
-                           COG~Label+(1|Spk),
-                           COG~Label+Sex+(1+Label|Spk),
-                           COG~Label+(1+Label|Spk))
-compare(baseline.cog,models.cog.baseline) # major improvement with random slopes
+tapply(baseline.cog$COG, list(baseline.cog$Label,baseline.cog$Sex), mean) 
 
-baseline.winner = lmer(COG~Label+Sex+(1+Label|Spk),data=baseline.cog,REML=TRUE)
-stargazer(baseline.winner,digit.separator = "")
+models.cog.baseline = list(COG~Label+(1|Spk),
+                           COG~Label+Sex+(1|Spk),
+                           COG~Label+(1+Label|Spk),
+                           COG~Label:Sex+(1|Spk))
+compare(baseline.cog,models.cog.baseline) # major improvement with random slopes; Sex doesn't help
+
+baseline.winner = lmer(COG~Label+(1|Spk),data=baseline.cog,REML=TRUE)
+stargazer(baseline.winner,digit.separator = "",single.row)
+
+compare(baseline.cog,list(COG~Label+(1|Spk),COG~Label+Sex+(1|Spk)))
 
 residual.scat.plot(baseline.winner)
 residual.hist(baseline.winner)

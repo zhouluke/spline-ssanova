@@ -35,6 +35,8 @@ def.constants = function(){
   
   POS.SPK <<- as.vector(soc.data[soc.data$Cond=="pos" & soc.data$Spk %in% TP.SPEAKERS, "Spk"])
   NEG.SPK <<- as.vector(soc.data[soc.data$Cond=="neg" & soc.data$Spk %in% TP.SPEAKERS, "Spk"])
+  
+  colour.palette <<- "Dark2"
 }
 
 

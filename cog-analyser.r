@@ -9,26 +9,10 @@ library(plyr)
 library(reshape2)
 library(lme4)
 
-source('lib-fileIO.r')
-
 setwd("/home/luke/Dropbox/LIN1290/Graphing")
 
-
-############################################################
-# DATA IMPORT 
-############################################################
-
-save.constants()
-
-soc.data = read.soc.data()
-cog.data = with.bm.reorder(read.cog.data())
-
-cog.bm = cog.data[cog.data$Spk=="BM1",]
-cog.tm = no.bm.reorder(merge(cog.data[cog.data$Spk!="BM1",],soc.data))
-#write.table(cog.tm,file="soc-fric-data.txt",sep="\t",row.names=FALSE,quote=FALSE)
-
-POS.SPK = as.vector(soc.data[soc.data$Cond=="pos" & soc.data$Spk %in% TP.SPEAKERS, "Spk"])
-NEG.SPK = as.vector(soc.data[soc.data$Cond=="neg" & soc.data$Spk %in% TP.SPEAKERS, "Spk"])
+source('lib-fileIO.r')
+def.constants()
 
 ############################################################
 # AGGREGATE BOXPLOTS 
@@ -59,7 +43,7 @@ levels(cog.data$Task) <- rev(levels(cog.data$Task))
 # PER SPEAKER BOXPLOTS
 ############################################################
 
-levels(cog.tm$Label) <- rev(levels(cog.tm$Label))
+#levels(cog.tm$Label) <- rev(levels(cog.tm$Label))
 png(filename="COG-pos-spk-task-boxes.png",width=out.width,height=out.height,res=out.res/1.2)
 bwplot(COG~Task | Spk+Label, ylab="CoG (Hz)",data=cog.tm[cog.tm$Spk %in% POS.SPK,],panel=panel.bm.comp)
 dev.off()

@@ -3,7 +3,7 @@
 # File I/O functions for COG/RMS data analysis.
 
 
-save.constants = function(){
+def.constants = function(){
   
   # Graph output
   out.width <<- 840
@@ -24,6 +24,17 @@ save.constants = function(){
   cog.data.filename <<- "cog-data.txt"
   rms.data.filename <<- "rms-data.txt"
   soc.data.filename <<- "social-data.txt"
+  
+  rms.data <<- read.rms.data()
+  soc.data <<- read.soc.data()
+  cog.data <<- with.bm.reorder(read.cog.data())
+  
+  cog.bm <<- cog.data[cog.data$Spk=="BM1",]
+  cog.tm <<- no.bm.reorder(merge(cog.data[cog.data$Spk!="BM1",],soc.data))
+  write.table(cog.tm,file="soc-fric-data.txt",sep="\t",row.names=FALSE,quote=FALSE)
+  
+  POS.SPK <<- as.vector(soc.data[soc.data$Cond=="pos" & soc.data$Spk %in% TP.SPEAKERS, "Spk"])
+  NEG.SPK <<- as.vector(soc.data[soc.data$Cond=="neg" & soc.data$Spk %in% TP.SPEAKERS, "Spk"])
 }
 
 

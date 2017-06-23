@@ -13,14 +13,27 @@ library(ggplot2)
 setwd("/home/luke/Dropbox/LIN1290/Graphing")
 
 source('lib-fileIO.r')
-def.constants()
+def.globals()
+
+############################################################
+
+bm.comp.boxplot = function(plot,colour="black",nudge_x=0.5){
+  
+  RED = "black" #"#BB0000"
+  BLUE = "black" #"turquoise2"
+  
+  plot + ylab("CoG (Hz)") + geom_boxplot() +
+    stat_summary(fun.y=mean, geom="point", shape=5, size=3) +
+    geom_hline(aes(yintercept=bm.stim.s), linetype="dashed", colour=RED) +
+    geom_hline(aes(yintercept=bm.stim.sh), linetype="dashed", colour=BLUE) +
+    geom_text(aes(0, bm.stim.s ,label = "s", vjust = -0.5),nudge_x=nudge_x,colour=RED) +
+    geom_text(aes(0, bm.stim.sh ,label = SH, vjust = -0.5),nudge_x=nudge_x,colour=BLUE)
+}
 
 ############################################################
 # AGGREGATE BOXPLOTS 
 ############################################################
 
-bm.stim.s = 7807.109245
-bm.stim.sh = 2793.041364
 panel.bm.comp = function(...) {
   panel.abline(h=c(bm.stim.sh,bm.stim.s), col="black",lty=2,alpha=0.7)
   panel.bwplot(...)
@@ -28,15 +41,11 @@ panel.bm.comp = function(...) {
 
 png(filename="COG-task-label-boxplots.png",width=out.width,height=out.height,res=out.res)
 #bwplot(COG~Label | Task, data=cog.data, ylab="CoG (Hz)",layout=c(3,1),panel=panel.bm.comp)
-ggplot(cog.data, aes(x=Task, y=COG, fill=Label)) + geom_boxplot() +
-  ylab("CoG (Hz)") + scale_color_brewer(palette = colour.palette) +
-  stat_summary(fun.y=mean, geom="point", shape=5, size=3,position=position_dodge(width=0.75)) +
-  theme(legend.title=element_blank()) +
-  geom_hline(aes(yintercept=bm.stim.s), linetype="dashed") +
-  geom_hline(aes(yintercept=bm.stim.sh), linetype="dashed")
+bm.comp.boxplot(ggplot(cog.data, aes(x=Label, y=COG, fill=Label)) +
+  facet_grid(. ~ Task) + ylab("CoG (Hz)") + theme(legend.position="none") 
+  , colour="#BB0000", nudge_x=1.5) 
 dev.off()
 
-levels(cog.data$Task) <- rev(levels(cog.data$Task))
 png(filename="COG-task-label-hist.png",width=out.width,height=out.height*1.3,res=out.res)
 histogram(~ COG | Label*Task, data=cog.data)
 dev.off()
@@ -44,21 +53,24 @@ dev.off()
 png(filename="COG-task-label-density.png",width=out.width,height=out.height*1.3,res=out.res)
 densityplot(~ COG | Label*Task, data=cog.data)
 dev.off()
-levels(cog.data$Task) <- rev(levels(cog.data$Task))
 
 ############################################################
 # PER SPEAKER BOXPLOTS
 ############################################################
 
-#levels(cog.tm$Label) <- rev(levels(cog.tm$Label))
-png(filename="COG-pos-spk-task-boxes.png",width=out.width,height=out.height,res=out.res/1.2)
-bwplot(COG~Task | Spk+Label, ylab="CoG (Hz)",data=cog.tm[cog.tm$Spk %in% POS.SPK,],panel=panel.bm.comp)
+png(filename="COG-pos-spk-task-boxes.png",width=out.width*1.1,height=out.height,res=out.res/1.2)
+#bwplot(COG~Task | Spk+Label, ylab="CoG (Hz)",data=cog.tm[cog.tm$Spk %in% POS.SPK,],panel=panel.bm.comp)
+bm.comp.boxplot(ggplot(cog.tm[cog.tm$Spk %in% POS.SPK,], aes(x=Label, y=COG,fill=Label)) + 
+  facet_grid(. ~ Spk*Task) + xlab("Phone") + theme(legend.position="none") +
+  stat_summary(fun.y=mean, geom="point", shape=5, size=3,position=position_dodge(width=0.75)), nudge_x=1.5)
 dev.off()
 
-png(filename="COG-neg-spk-task-boxes.png",width=out.width,height=out.height,res=out.res/1.2)
-bwplot(COG~Task | Spk+Label, ylab="CoG (Hz)",data=cog.tm[cog.tm$Spk %in% NEG.SPK,],panel=panel.bm.comp)
+png(filename="COG-neg-spk-task-boxes.png",width=out.width*1.1,height=out.height,res=out.res/1.2)
+#bwplot(COG~Task | Spk+Label, ylab="CoG (Hz)",data=cog.tm[cog.tm$Spk %in% NEG.SPK,],panel=panel.bm.comp)
+bm.comp.boxplot(ggplot(cog.tm[cog.tm$Spk %in% NEG.SPK,], aes(x=Label, y=COG,fill=Label)) + 
+  facet_grid(. ~ Spk*Task) + xlab("Phone") + theme(legend.position="none"), nudge_x=1.5)
 dev.off()
-levels(cog.tm$Label) <- rev(levels(cog.tm$Label))
+
 
 
 ############################################################
@@ -78,7 +90,7 @@ sd.per.spk.task = tapply(filt.data$COG, list(filt.data$SpkTask, filt.data$Label)
 ############################################################
 
 calc.task.mean = function(df,spk,task,label){
-  mean(filt.data[df$Spk==spk & df$Task==task & df$Label==label,"COG"])
+  mean(df[df$Spk==spk & df$Task==task & df$Label==label,"COG"])
 }
 
 chg.per.spk = data.frame(
@@ -98,8 +110,8 @@ chg.per.spk = merge(chg.per.spk,soc.data)
 
 
 png(filename="s-sh-chg-vs-iat.png",width=out.width,height=out.height.small,res=out.res)
-ggplot(data=chg.per.spk,aes(x=IAT,y=Chg)) + 
-  geom_point(aes(shape=Condition)) + geom_smooth(method='lm') +
+ggplot(data=chg.per.spk,aes(x=IAT.score,y=Chg)) + 
+  geom_point(aes(shape=Cond)) + geom_smooth(method='lm') +
   ylab("∆CoGD(s,ʃ) (Hz)") + xlab("IAT score") + theme(legend.text=element_text(size=14))
 dev.off()
 
@@ -142,7 +154,7 @@ cor(x=chg.per.spk$s.sh.base,y=chg.per.spk$s.sh.imit)
 
 # Distance FROM BM
 bm.mean.s = mean(filt.data[filt.data$Spk=="BM1" & filt.data$Label=="s","COG"])
-bm.mean.sh = mean(filt.data[filt.data$Spk=="BM1" & filt.data$Label=="ʃ","COG"])
+bm.mean.sh = mean(filt.data[filt.data$Spk=="BM1" & filt.data$Label==SH,"COG"])
 
 
 bm.s = bm.stim.s

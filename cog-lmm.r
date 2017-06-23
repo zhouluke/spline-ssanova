@@ -14,7 +14,7 @@ library(stargazer)
 setwd("/home/luke/Dropbox/LIN1290/Graphing")
 
 source('lib-fileIO.r')
-def.constants()
+def.globals()
 
 ############################################################
 # LINEAR MIXED FX MODELS
@@ -60,6 +60,7 @@ models.all.cog.data.no.slopes = list(COG~Label+Task+Sex+Cond+(1|Spk),
                            COG~Label+Task+Sex+Cond+(1|Spk)+IAT.score,
                            COG~Label+Task+Sex+Cond+(1|Spk)+IAT.score+IAT.order)
 compare(cog.tm,models.all.cog.data.no.slopes) # no sig. improvements
+
 
 # With random slopes
 
@@ -156,3 +157,10 @@ models.cog.female = list(COG~Label+Cond+(1+Task|Spk),
                        COG~Label+Cond+IAT.score+IAT.order+(1+Task|Spk),
                        COG~Label+Cond+IAT.score+IAT.order+(1+Task+Label|Spk))
 compare(female.cog,models.cog.female)
+
+#########################################################################
+
+# Conversion change
+
+
+

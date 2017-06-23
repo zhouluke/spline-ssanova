@@ -3,7 +3,7 @@
 # File I/O functions for COG/RMS data analysis.
 
 
-def.constants = function(){
+def.globals = function(){
   
   # Graph output
   out.width <<- 840
@@ -11,9 +11,17 @@ def.constants = function(){
   out.height.small <<- 480
   out.res <<- 144
   
+  # BM CoG values
+  bm.stim.s <<- 7807.109245
+  bm.stim.sh <<- 2793.041364
+  
+  # BM RMS values
+  bm.rms.s.sh <<- 3.805
+  bm.rms.k.t <<- 7.916
+  
   # For renaming labels
   OLD.LABELS <<- c("s","S","x")
-  SH <<- "ʃ"
+  SH <<- "ʂ"
   C.FRIC <<- "ɕ"
   NEW.LABELS <<- c("s", SH, C.FRIC)
   
@@ -77,6 +85,7 @@ read.rms.data = function(){
   filt.by.spk$k.t.tasks = filt.by.spk$k.t.imit - filt.by.spk$k.t.base
   filt.by.spk$chg.quotient = abs(filt.by.spk$s.sh.tasks / filt.by.spk$k.t.tasks)
   
+  
   filt.by.spk$Cond <- factor(filt.by.spk$Cond, levels = c("pos","neg"))
   
   NUM.SPK = length(SPEAKERS)
@@ -84,6 +93,9 @@ read.rms.data = function(){
   concat.data = melt(filt.by.spk, 
                      id.vars=c("Spk","Cond","Sex","rot.tasks","IAT.id","IAT.score"),
                      variable.name="Type", value.name="y")
+  
+  concat.data$Sex = factor(concat.data$Sex,levels=c("M","F"))
+  
   
   return(concat.data)
 }

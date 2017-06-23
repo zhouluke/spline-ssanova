@@ -2,82 +2,44 @@
 # Luke Zhou. June 2017.
 # RMS analyzer.
 
-
 rm(list = ls())
 
 library(lattice)
 library(plyr)
-library(gss)
-
-out.width = 840
-out.height = 480
-out.res = 144
+library(reshape2)
+library(lme4)
+library(ggplot2)
 
 setwd("/home/luke/Dropbox/LIN1290/Graphing")
 
-###############################################
+source('lib-fileIO.r')
+def.globals()
 
-data.filename = "rms-data.txt"
-
-KEEP.SPK = c("TP2","TP3","TP4","TP5","TP6","TP7","TP8")
-SPK.ORDER = c("TP3","TP8","TP7","TP4","TP2","TP5","TP6")
-
-POS.SPK = c("TP3","TP8","TP7","TP4")
-NEG.SPK = c("TP2","TP5","TP6")
-
-orig.data = read.table(data.filename, sep="\t", header=TRUE)
-
-filt.by.spk = orig.data[orig.data$Spk %in% KEEP.SPK,]
-filt.by.spk$s.sh.tasks = filt.by.spk$s.sh.imit - filt.by.spk$s.sh.base
-filt.by.spk$k.t.tasks = filt.by.spk$k.t.imit - filt.by.spk$k.t.base
-filt.by.spk$chg.quotient = abs(filt.by.spk$s.sh.tasks / filt.by.spk$k.t.tasks)
-
-filt.by.spk$Cond <- factor(filt.by.spk$Cond, levels = c("pos","neg"))
-
-NUM.SPK = length(KEEP.SPK)
-
-concat.data = data.frame(
-  Spk = factor(rep(KEEP.SPK,7)),
-  Type = factor(c(rep("s.sh.base",NUM.SPK),rep("s.sh.imit",NUM.SPK),
-                    c(rep("k.t.base",NUM.SPK),rep("k.t.imit",NUM.SPK),
-                        rep("s.sh",NUM.SPK),rep("k.t",NUM.SPK),rep("chg.quotient",NUM.SPK)))),
-  y = c(filt.by.spk$s.sh.base,filt.by.spk$s.sh.imit,
-        filt.by.spk$k.t.base,filt.by.spk$k.t.imit,
-        filt.by.spk$s.sh.tasks,filt.by.spk$k.t.tasks,filt.by.spk$chg.quotient)
-)
-
-concat.data = merge(concat.data,filt.by.spk[,c("Spk","Cond","Sex","rot.tasks","IAT.id")])
-
-# Reorders speakers for graphing
-concat.data$spk.order = match(concat.data$Spk,SPK.ORDER)
-concat.data = concat.data[order(concat.data$spk.order),]
-concat.data$Sex = factor(concat.data$Sex,levels=c("M","F"))
-
-#################################################
+############################################################
 
 # Plots each task's RMS for each consonant pair
 
-s.sh.only = concat.data[grepl("s.sh.",concat.data$Type),]
-k.t.only = concat.data[grepl("k.t.",concat.data$Type),]
+rms.s.sh = rms.data[rms.data$Type %in% c("s.sh.base","s.sh.imit"),]
+rms.k.t = rms.data[rms.data$Type %in% c("k.t.base","k.t.imit"),]
 
 
 png(filename="rms-sep-per-task-s-sh.png",width=out.width,height=out.height,res=out.res)
-ggplot(data=s.sh.only, aes(x=Spk, y=y, fill=factor(Type,labels=c("baseline","shadowing")), label=Spk)) +
+ggplot(data=rms.s.sh, aes(x=Spk, y=y, fill=Type, label=Spk)) +
   geom_bar(stat="identity",position = "dodge",width=.75) +
-  facet_grid(~Cond+Sex, switch = "x", scales = "free_x", space = "free_x") + 
-  xlab("Speaker") + ylab("RMSD between [s] and [ʃ] (mm)") +
+  facet_grid(~Cond, switch = "x", scales = "free_x", space = "free_x") + 
+  xlab("Speaker") + ylab(paste0("RMSD between [s] and [",SH,"] (mm)")) +
   theme(legend.title = element_blank())
 dev.off()
 
 png(filename="rms-sep-per-task-k-t.png",width=out.width,height=out.height,res=out.res)
-ggplot(data=k.t.only, aes(x=Spk, y=y, fill=factor(Type,labels=c("baseline","shadowing")), label=Spk)) +
+ggplot(data=rms.k.t, aes(x=Spk, y=y, fill=Type, label=Spk)) +
   geom_bar(stat="identity",position = "dodge",width=.75) +
-  facet_grid(~Cond+Sex, switch = "x", scales = "free_x", space = "free_x") +
+  facet_grid(~Cond, switch = "x", scales = "free_x", space = "free_x") +
   xlab("Speaker") + ylab("RMSD between [k] and [t] (mm)") +
   theme(legend.title = element_blank())
 dev.off()
 
-task.pair.rms = rbind(s.sh.only,k.t.only)
+task.pair.rms = rbind(rms.s.sh,rms.k.t)
 task.pair.rms$Graph = ifelse(grepl("s.sh.",task.pair.rms$Type),"s.sh","k.t")
 
 ggplot(data=task.pair.rms, aes(x=Spk, y=y, fill=Type, label=Spk)) +
@@ -89,18 +51,18 @@ ggplot(data=task.pair.rms, aes(x=Spk, y=y, fill=Type, label=Spk)) +
 
 # Plots between-task changes for each consonant pair
 
-changes.only = concat.data[concat.data$Type!="chg.quotient" & concat.data$Type %in% c("s.sh","k.t","chg.quotient"),]
+rms.changes.only = rms.data[rms.data$Type!="chg.quotient" & rms.data$Type %in% c("s.sh.tasks","k.t.tasks","chg.quotient"),]
 
 png(filename="drmsd.png",width=out.width,height=480,res=out.res)
-ggplot(data=changes.only[changes.only$rot.tasks=="N",], aes(x=Spk, y=y, fill=factor(Type,labels=c("k vs. t","s vs. ʃ")))) +
+ggplot(data=rms.changes.only[rms.changes.only$rot.tasks=="N",], aes(x=Spk, y=y, fill=Type)) +
   geom_bar(stat="identity",position = "dodge",width=.75) +
-  facet_grid(~Cond+Sex, switch = "x", scales = "free_x", space = "free_x") +
+  facet_grid(~Cond, switch = "x", scales = "free_x", space = "free_x") +
   xlab("Speaker") + ylab("∆RMSD between baseline & shadowing (mm)") +
   theme(legend.title = element_blank())
 dev.off()
 
-range(changes.only[changes.only$rot.tasks=="N" & changes.only$Type=="k.t","y"])
-range(abs(changes.only[changes.only$rot.tasks=="N" & changes.only$Type=="s.sh","y"]))
+range(rms.changes.only[rms.changes.only$rot.tasks=="N" & rms.changes.only$Type=="k.t","y"])
+range(abs(rms.changes.only[rms.changes.only$rot.tasks=="N" & rms.changes.only$Type=="s.sh","y"]))
 
 
 # LINE GRAPHS

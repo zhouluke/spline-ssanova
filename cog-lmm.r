@@ -54,6 +54,20 @@ residual.qq.plot = function(model){
 
 # Models over all speakers & tasks
 
+# WITHOUT IAT
+
+simpler1 = lmer(data=cog.tm,COG~Task+Label+Cond+(1|Spk),REML=FALSE)
+summary(simpler1)
+
+simpler2 = lmer(data=cog.tm,COG~Task+Label+Cond+Sex+(1|Spk),REML=FALSE)
+summary(simpler2)
+
+anova(simpler1,simpler2)
+
+stargazer(lmer(data=cog.tm,COG~Task+Label+Cond+(1|Spk),REML=TRUE),digit.separator="")
+
+# WITH IAT
+
 # Without random slopes
 
 models.all.cog.data.no.slopes = list(COG~Label+Task+Sex+Cond+(1|Spk),
@@ -101,6 +115,7 @@ competitors = list(winner.fml,
                    COG~Label+Task+Sex+Cond+IAT.score+(1+Label+Task|Spk),
                    COG~Label+Task+Sex+Cond+IAT.score+(1+Task|Spk)+(1+Label|Spk)+(1+Cond|Spk))
 compare(cog.tm,competitors) # major improvement!
+
 
 #########################################################################
 

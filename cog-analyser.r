@@ -27,13 +27,13 @@ bm.comp.boxplot = function(plot,colour="black",nudge_x=1.5){
     stat_summary(fun.y=mean, geom="point", shape=5, size=3) +
     geom_hline(aes(yintercept=bm.stim.s), linetype="dashed", colour=RED) +
     geom_hline(aes(yintercept=bm.stim.sh), linetype="dashed", colour=BLUE) +
-    theme(plot.margin=unit(c(1, 3, 0.5, 0.5), "lines"))
+    theme(plot.margin=unit(c(1, 3.4, 0.5, 0.5), "lines"))
     #geom_text(aes(-1.1, bm.stim.s ,label = "s", vjust = -0.5),nudge_x=nudge_x,colour=RED) #+
     #geom_text(aes(0, bm.stim.sh ,label = SH, vjust = -0.5),nudge_x=nudge_x,colour=BLUE)
   
   g = g + 
-    annotation_custom(grob=textGrob("[s] (BM)",hjust=0,gp=gpar(fontsize=10)), xmin=2.9, xmax=Inf, ymin=bm.stim.s, ymax=bm.stim.s) + 
-    annotation_custom(grob=textGrob(paste("[",SH,"] (BM)",sep=""), hjust=0, gp=gpar(fontsize=10)), xmin=2.9, xmax=Inf, ymin=bm.stim.sh, ymax=bm.stim.sh)
+    annotation_custom(grob=textGrob("[s] (BM)",hjust=0,gp=gpar(fontsize=10)), xmin=3, xmax=Inf, ymin=bm.stim.s, ymax=bm.stim.s) + 
+    annotation_custom(grob=textGrob(paste("[",SH,"] (BM)",sep=""), hjust=0, gp=gpar(fontsize=10)), xmin=3, xmax=Inf, ymin=bm.stim.sh, ymax=bm.stim.sh)
   gt <- ggplot_gtable(ggplot_build(g))
   gt$layout[grepl("panel", gt$layout$name), ]$clip <- "off"
   grid.draw(gt)

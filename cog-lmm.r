@@ -162,5 +162,17 @@ compare(female.cog,models.cog.female)
 
 # Conversion change
 
+concat.cog = melt(cog.chg.per.spk)
+
+models.conversion.chg.s = lm(value~Cond,data=concat.cog[concat.cog$variable %in% c("chg.s"),])
+summary(models.conversion.chg.s)
+
+models.conversion.chg.sh = lm(value~Cond,data=concat.cog[concat.cog$variable %in% c("chg.s"),])
+summary(models.conversion.chg.sh)
+
+models.conversion.chg = lm(value~Cond,data=concat.cog[concat.cog$variable %in% c("chg.s","chg.sh"),])
+summary(models.conversion.chg)
+
+stargazer(models.conversion.chg.s,models.conversion.chg.sh)
 
 

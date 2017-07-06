@@ -44,6 +44,9 @@ def.globals = function(){
   POS.SPK <<- as.vector(soc.data[soc.data$Cond=="pos" & soc.data$Spk %in% TP.SPEAKERS, "Spk"])
   NEG.SPK <<- as.vector(soc.data[soc.data$Cond=="neg" & soc.data$Spk %in% TP.SPEAKERS, "Spk"])
   
+  cog.chg.per.spk <<- cog.data.calc.diffs(cog.tm,bm.stim.s,bm.stim.sh)
+  cog.chg.per.spk <<- merge(cog.chg.per.spk,soc.data)
+  
   colour.palette <<- "Dark2"
 }
 
@@ -96,6 +99,13 @@ read.rms.data = function(){
   
   concat.data$Sex = factor(concat.data$Sex,levels=c("M","F"))
   
+  concat.data$Graph.label = ifelse(grepl("base",concat.data$Type),"baseline",
+                                   ifelse(grepl("imit",concat.data$Type),"shadowing","tasks"))
+  
+  concat.data$Graph.label = ifelse(concat.data$Graph.label=="tasks",
+                                   ifelse(grepl("s.sh",concat.data$Type),paste("s",SH,sep="-"),"k-t"),
+                                   concat.data$Graph.label)
+  concat.data$Graph.label = factor(concat.data$Graph.label, levels=c(paste("s",SH,sep="-"),"k-t"))
   
   return(concat.data)
 }
@@ -113,6 +123,39 @@ read.soc.data = function(){
 }
 
 
+cog.data.calc.diffs = function(cog.tm,bm.s,bm.sh){
+  
+  calc.task.mean = function(df,spk,task,label){
+    mean(df[df$Spk==spk & df$Task==task & df$Label==label,"COG"])
+  }
+  
+  cog.chg.per.spk = data.frame(
+    Spk = TP.SPEAKERS,
+    s.base = as.vector(sapply(TP.SPEAKERS,function(spk) calc.task.mean(cog.tm,spk,"baseline","s") )),
+    s.imit = as.vector(sapply(TP.SPEAKERS,function(spk) calc.task.mean(cog.tm,spk,"shadowing","s") )),
+    sh.base = as.vector(sapply(TP.SPEAKERS,function(spk) calc.task.mean(cog.tm,spk,"baseline",SH) )),
+    sh.imit = as.vector(sapply(TP.SPEAKERS,function(spk) calc.task.mean(cog.tm,spk,"shadowing",SH) ))
+  )
+  
+  cog.chg.per.spk$s.sh.base = cog.chg.per.spk$s.base - cog.chg.per.spk$sh.base
+  cog.chg.per.spk$s.sh.imit = cog.chg.per.spk$s.imit - cog.chg.per.spk$sh.imit
+  
+  # Conversion change
+  cog.chg.per.spk$s.from.bm.base = cog.chg.per.spk$s.base - bm.s
+  cog.chg.per.spk$sh.from.bm.base = cog.chg.per.spk$sh.base - bm.sh
+  cog.chg.per.spk$s.from.bm.imit = cog.chg.per.spk$s.imit - bm.s
+  cog.chg.per.spk$sh.from.bm.imit = cog.chg.per.spk$sh.imit - bm.sh
+  
+  # Contrast change
+  cog.chg.per.spk$chg.s = cog.chg.per.spk$s.imit - cog.chg.per.spk$s.base
+  cog.chg.per.spk$chg.sh = cog.chg.per.spk$sh.imit - cog.chg.per.spk$sh.base
+  cog.chg.per.spk$chg = cog.chg.per.spk$s.sh.imit - cog.chg.per.spk$s.sh.base
+  
+  return(cog.chg.per.spk)
+  
+}
+
+#########################################################################
 
 no.bm.reorder = function(df){
   df$Spk = factor(df$Spk)

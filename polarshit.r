@@ -276,7 +276,7 @@ out.height = 0.8*640
 
 out.res = 144
 
-for (i in 2:6){
+for (i in 2:9){
   
   speaker = paste("TP",i,sep="")
   my.tasks = levels(orig.data[orig.data$Speaker==speaker,"Task"])
@@ -285,8 +285,8 @@ for (i in 2:6){
 }
 
 
-do.one.spk("TP8","base")
-do.one.spk("TP8","imit")
+do.one.spk("TP9","base")
+do.one.spk("TP9","imit")
 
 #out.height = 640
 show.pal = TRUE

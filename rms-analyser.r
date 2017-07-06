@@ -24,7 +24,7 @@ rms.k.t = rms.data[rms.data$Type %in% c("k.t.base","k.t.imit"),]
 
 
 png(filename="rms-sep-per-task-s-sh.png",width=out.width,height=out.height,res=out.res)
-ggplot(data=rms.s.sh, aes(x=Spk, y=y, fill=Type, label=Spk)) +
+ggplot(data=rms.s.sh, aes(x=Spk, y=y, fill=Graph.label, label=Spk)) +
   geom_bar(stat="identity",position = "dodge",width=.75) +
   facet_grid(~Cond, switch = "x", scales = "free_x", space = "free_x") + 
   xlab("Speaker") + ylab(paste0("RMSD between [s] and [",SH,"] (mm)")) +
@@ -32,7 +32,7 @@ ggplot(data=rms.s.sh, aes(x=Spk, y=y, fill=Type, label=Spk)) +
 dev.off()
 
 png(filename="rms-sep-per-task-k-t.png",width=out.width,height=out.height,res=out.res)
-ggplot(data=rms.k.t, aes(x=Spk, y=y, fill=Type, label=Spk)) +
+ggplot(data=rms.k.t, aes(x=Spk, y=y, fill=Graph.label, label=Spk)) +
   geom_bar(stat="identity",position = "dodge",width=.75) +
   facet_grid(~Cond, switch = "x", scales = "free_x", space = "free_x") +
   xlab("Speaker") + ylab("RMSD between [k] and [t] (mm)") +
@@ -54,15 +54,15 @@ ggplot(data=task.pair.rms, aes(x=Spk, y=y, fill=Type, label=Spk)) +
 rms.changes.only = rms.data[rms.data$Type!="chg.quotient" & rms.data$Type %in% c("s.sh.tasks","k.t.tasks","chg.quotient"),]
 
 png(filename="drmsd.png",width=out.width,height=480,res=out.res)
-ggplot(data=rms.changes.only[rms.changes.only$rot.tasks=="N",], aes(x=Spk, y=y, fill=Type)) +
+ggplot(data=rms.changes.only[rms.changes.only$rot.tasks=="N",], aes(x=Spk, y=y, fill=Graph.label)) +
   geom_bar(stat="identity",position = "dodge",width=.75) +
   facet_grid(~Cond, switch = "x", scales = "free_x", space = "free_x") +
   xlab("Speaker") + ylab("∆RMSD between baseline & shadowing (mm)") +
   theme(legend.title = element_blank())
 dev.off()
 
-range(rms.changes.only[rms.changes.only$rot.tasks=="N" & rms.changes.only$Type=="k.t","y"])
-range(abs(rms.changes.only[rms.changes.only$rot.tasks=="N" & rms.changes.only$Type=="s.sh","y"]))
+range(rms.changes.only[rms.changes.only$rot.tasks=="N" & rms.changes.only$Type=="k.t.tasks","y"])
+range(abs(rms.changes.only[rms.changes.only$rot.tasks=="N" & rms.changes.only$Type=="s.sh.tasks","y"]))
 
 
 # LINE GRAPHS

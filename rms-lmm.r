@@ -42,5 +42,15 @@ all.data.rms3 = lm(y~Cond,data=rms.data[rms.data$Type=="s.sh.tasks" & rms.data$r
 summary(all.data.rms3)
 stargazer(all.data.rms3,digit.separator="")
 
+residual.scat.plot(all.data.rms3)
+residual.hist(all.data.rms3)
+residual.qq.plot(all.data.rms3)
+dfbeta(all.data.rms3)
+
 all.data.rms4 = lm(y~Cond+Sex,data=rms.data[rms.data$Type=="s.sh.tasks" & rms.data$rot.tasks=="N",])
 summary(all.data.rms4)
+
+residual.scat.plot(all.data.rms4)
+residual.hist(all.data.rms4)
+residual.qq.plot(all.data.rms4)
+dfbeta(all.data.rms4)

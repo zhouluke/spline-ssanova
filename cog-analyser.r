@@ -192,9 +192,10 @@ cor(x=cog.chg.per.spk$s.sh.base,y=cog.chg.per.spk$chg.sh)
 # Graphs: each spk's DeltaCOGD-related values
 
 concat.cog = melt(cog.chg.per.spk)
-concat.cog$Condition = mapvalues(concat.cog$Condition, from = c("-","+"), to = c("neg","pos"))
+#concat.cog$Condition = mapvalues(concat.cog$Condition, from = c("-","+"), to = c("neg","pos"))
+concat.cog$Condition = concat.cog$Cond
 concat.cog$Condition = factor(concat.cog$Condition, levels = c("pos","neg"))
-concat.cog$Gender = factor(concat.cog$Gender, levels = c("M","F"))
+concat.cog$Sex = factor(concat.cog$Sex, levels = c("M","F"))
 
 phone.wise.chg = concat.cog[concat.cog$variable %in% c("chg.s","chg.sh"),]
 
@@ -202,7 +203,7 @@ png(filename="chg-cog-phone-wise.png",width=out.width,height=out.height.small,re
 ggplot(data=phone.wise.chg, aes(x=Spk, y=value, fill=factor(variable,labels=c("s",SH)), label=Spk)) +
   geom_bar(stat="identity",position = "dodge",width=.75) +
   xlab("Speaker") + ylab("Change in CoG (Hz)") +
-  facet_grid(~Condition+Gender, switch = "x", scales = "free_x", space = "free_x") + 
+  facet_grid(~Condition, switch = "x", scales = "free_x", space = "free_x") + 
   theme(legend.title = element_blank())
 dev.off()
 
@@ -216,17 +217,17 @@ png(filename="chg-cog-pair-wise.png",width=out.width,height=out.height.small,res
 ggplot(data=pair.wise.sep, aes(x=Spk, y=value, fill=factor(variable,labels=c("baseline","shadowing")), label=Spk)) +
   geom_bar(stat="identity",position = "dodge",width=.75) +
   xlab("Speaker") + ylab("CoG separation between s & ʃ (Hz)") +
-  facet_grid(~Condition+Gender, switch = "x", scales = "free_x", space = "free_x") + 
+  facet_grid(~Cond, switch = "x", scales = "free_x", space = "free_x") + 
   theme(legend.title = element_blank())
 dev.off()
 
 
-pair.wise.chg = concat.cog[concat.cog$variable == "Chg",]
+pair.wise.chg = concat.cog[concat.cog$variable == "chg",]
 
 png(filename="chg-val-cog-pair-wise.png",width=out.width,height=out.height.small,res=out.res)
 ggplot(data=pair.wise.chg, aes(x=Spk, y=value, label=Spk)) +
   geom_bar(stat="identity",position = "dodge",width=.75) +
   xlab("Speaker") + ylab("∆CoGD(s,ʃ) (Hz)") +
-  facet_grid(~Condition+Gender, switch = "x", scales = "free_x", space = "free_x") + 
+  facet_grid(~Cond, switch = "x", scales = "free_x", space = "free_x") + 
   theme(legend.title = element_blank())
 dev.off()

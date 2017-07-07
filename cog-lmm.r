@@ -52,19 +52,36 @@ residual.qq.plot = function(model){
 
 #########################################################################
 
+cog.tm$COG.from.BM = ifelse(cog.tm$Label=="s",bm.stim.s-cog.tm$COG,cog.tm$COG-bm.stim.sh)
+
 # Models over all speakers & tasks
 
 # WITHOUT IAT
 
-simpler1 = lmer(data=cog.tm,COG~Task+Label+Cond+(1|Spk),REML=FALSE)
-summary(simpler1)
+simpler1a = lmer(data=cog.tm,COG~Task+Label+Cond+(1|Spk),REML=FALSE)
+summary(simpler1a)
 
-simpler2 = lmer(data=cog.tm,COG~Task+Label+Cond+Sex+(1|Spk),REML=FALSE)
-summary(simpler2)
+simpler1b = lmer(data=cog.tm,COG~Task+Label+Cond+Sex+(1|Spk),REML=FALSE)
+summary(simpler1b)
 
-anova(simpler1,simpler2)
+anova(simpler1a,simpler1b)
+cond.ass.model.cog = lmer(data=cog.tm,COG~Task+Label+Cond+(1|Spk),REML=TRUE)
+stargazer(cond.ass.model.cog,digit.separator="")
 
-stargazer(lmer(data=cog.tm,COG~Task+Label+Cond+(1|Spk),REML=TRUE),digit.separator="")
+
+simpler2a = lmer(data=cog.tm,COG.from.BM~Task+Label+Cond+(1|Spk),REML=FALSE)
+summary(simpler2a)
+
+simpler2b = lmer(data=cog.tm,COG.from.BM~Task+Label+Cond+Sex+(1|Spk),REML=FALSE)
+summary(simpler2b)
+
+anova(simpler2a,simpler2b)
+cond.ass.model.cog.from.bm = lmer(data=cog.tm,COG.from.BM~Task+Label+Cond+(1|Spk),REML=TRUE)
+stargazer(cond.ass.model.cog.from.bm,digit.separator="")
+
+
+stargazer(cond.ass.model.cog,cond.ass.model.cog.from.bm,digit.separator="")
+
 
 # WITH IAT
 
@@ -140,6 +157,23 @@ residual.scat.plot(baseline.winner)
 residual.hist(baseline.winner)
 residual.qq.plot(baseline.winner)
 
+###
+
+baseline.cog.from.bm = lmer(COG.from.BM~Label+(1|Spk),data=baseline.cog,REML=TRUE)
+stargazer(baseline.cog.from.bm,digit.separator = "")
+
+compare(baseline.cog,list(COG.from.BM~Label+(1|Spk),COG.from.BM~Label+Sex+(1|Spk)))
+
+residual.scat.plot(baseline.cog.from.bm)
+residual.hist(baseline.cog.from.bm)
+residual.qq.plot(baseline.cog.from.bm)
+
+###
+
+stargazer(baseline.winner,baseline.cog.from.bm,digit.separator = "")
+
+
+
 # Model on shadowing data only
 
 shadowing.cog = cog.tm[cog.tm$Task=="shadowing",]
@@ -175,7 +209,7 @@ compare(female.cog,models.cog.female)
 
 #########################################################################
 
-# Conversion change
+# Conversion changes
 
 concat.cog = melt(cog.chg.per.spk)
 
@@ -189,5 +223,32 @@ models.conversion.chg = lm(value~Cond,data=concat.cog[concat.cog$variable %in% c
 summary(models.conversion.chg)
 
 stargazer(models.conversion.chg.s,models.conversion.chg.sh)
+
+
+cog.conv.chg = concat.cog[concat.cog$variable %in% c("chg.s","chg.sh"),]
+cog.conv.chg$Phone = ifelse(cog.conv.chg$variable=="chg.s","s",SH)
+
+models.conversion.chg = lm(value~Cond+Phone,data=cog.conv.chg)
+summary(models.conversion.chg)
+stargazer(models.conversion.chg)
+
+#########################################################################
+
+# Contrast changes
+
+contr.cog.per.task = concat.cog[grepl(concat.cog$variable,pattern="s.sh"),]
+contr.cog.per.task$Task = ifelse(grepl(contr.cog.per.task$variable,pattern="base"),"baseline","shadowing")
+
+models.contr.cog.per.task = lm(value~Task+Cond,data=contr.cog.per.task)
+summary(models.contr.cog.per.task)
+stargazer(models.contr.cog.per.task)
+
+models.contr.cog.per.task.sex = lm(value~Task+Cond+Sex,data=contr.cog.per.task)
+summary(models.contr.cog.per.task.sex)
+
+compare(models.contr.cog.per.task,models.contr.cog.per.task)
+
+
+
 
 

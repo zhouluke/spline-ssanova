@@ -17,6 +17,9 @@ def.globals()
 
 ############################################################
 
+
+############################################################
+
 # Plots each task's RMS for each consonant pair
 
 rms.s.sh = rms.data[rms.data$Type %in% c("s.sh.base","s.sh.imit"),]
@@ -24,19 +27,29 @@ rms.k.t = rms.data[rms.data$Type %in% c("k.t.base","k.t.imit"),]
 
 
 png(filename="rms-sep-per-task-s-sh.png",width=out.width,height=out.height,res=out.res)
-ggplot(data=rms.s.sh, aes(x=Spk, y=y, fill=Graph.label, label=Spk)) +
+plot = ggplot(data=rms.s.sh, aes(x=Spk, y=y, fill=Type, label=Spk)) +
   geom_bar(stat="identity",position = "dodge",width=.75) +
   facet_grid(~Cond, switch = "x", scales = "free_x", space = "free_x") + 
   xlab("Speaker") + ylab(paste0("RMSD between [s] and [",SH,"] (mm)")) +
-  theme(legend.title = element_blank())
+  theme(legend.title = element_blank()) +
+  geom_hline(aes(yintercept=bm.rms.s.sh), linetype="dashed") +
+  annotation_custom(grob=textGrob("BM",hjust=0,gp=gpar(fontsize=10)), xmin=5, xmax=Inf, ymin=bm.rms.s.sh, ymax=bm.rms.s.sh) 
+gt <- ggplot_gtable(ggplot_build(plot))
+gt$layout[grepl("panel", gt$layout$name), ]$clip <- "off"
+grid.draw(gt)
 dev.off()
 
 png(filename="rms-sep-per-task-k-t.png",width=out.width,height=out.height,res=out.res)
-ggplot(data=rms.k.t, aes(x=Spk, y=y, fill=Graph.label, label=Spk)) +
+plot = ggplot(data=rms.k.t, aes(x=Spk, y=y, fill=Type, label=Spk)) +
   geom_bar(stat="identity",position = "dodge",width=.75) +
   facet_grid(~Cond, switch = "x", scales = "free_x", space = "free_x") +
   xlab("Speaker") + ylab("RMSD between [k] and [t] (mm)") +
-  theme(legend.title = element_blank())
+  theme(legend.title = element_blank()) +
+  geom_hline(aes(yintercept=bm.rms.k.t), linetype="dashed") + 
+  annotation_custom(grob=textGrob("BM",hjust=0,gp=gpar(fontsize=10)), xmin=5, xmax=Inf, ymin=bm.rms.k.t, ymax=bm.rms.k.t)
+gt <- ggplot_gtable(ggplot_build(plot))
+gt$layout[grepl("panel", gt$layout$name), ]$clip <- "off"
+grid.draw(gt)
 dev.off()
 
 task.pair.rms = rbind(rms.s.sh,rms.k.t)
@@ -57,7 +70,7 @@ png(filename="drmsd.png",width=out.width,height=480,res=out.res)
 ggplot(data=rms.changes.only[rms.changes.only$rot.tasks=="N",], aes(x=Spk, y=y, fill=Graph.label)) +
   geom_bar(stat="identity",position = "dodge",width=.75) +
   facet_grid(~Cond, switch = "x", scales = "free_x", space = "free_x") +
-  xlab("Speaker") + ylab("∆RMSD between baseline & shadowing (mm)") +
+  xlab("Speaker") + ylab("∆RMSD (mm)") +
   theme(legend.title = element_blank())
 dev.off()
 

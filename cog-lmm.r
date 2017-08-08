@@ -52,11 +52,10 @@ residual.qq.plot = function(model){
 
 #########################################################################
 
-cog.tm$COG.from.BM = ifelse(cog.tm$Label=="s",bm.stim.s-cog.tm$COG,cog.tm$COG-bm.stim.sh)
 
 # Models over all speakers & tasks
 
-# WITHOUT IAT
+# WITH COND INSTEAD OF IAT
 
 simpler1a = lmer(data=cog.tm,COG~Task+Label+Cond+(1|Spk),REML=FALSE)
 summary(simpler1a)
@@ -65,7 +64,18 @@ simpler1b = lmer(data=cog.tm,COG~Task+Label+Cond+Sex+(1|Spk),REML=FALSE)
 summary(simpler1b)
 
 anova(simpler1a,simpler1b)
-cond.ass.model.cog = lmer(data=cog.tm,COG~Task+Label+Cond+(1|Spk),REML=TRUE)
+
+simpler1c = lmer(data=cog.tm,COG~Task+Label+Cond+Label:Task+Label:Cond+(1|Spk),REML=FALSE)
+summary(simpler1c)
+
+simpler1d = lmer(data=cog.tm,COG~Task+Label+Cond+Sex+Label:Task+Label:Cond+(1|Spk),REML=FALSE)
+summary(simpler1d)
+
+anova(simpler1c,simpler1d)
+
+anova(simpler1a,simpler1c)
+
+cond.ass.model.cog = lmer(data=cog.tm,COG~Task+Label+Cond+Label:Task+Label:Cond+(1|Spk),REML=TRUE)
 stargazer(cond.ass.model.cog,digit.separator="")
 
 
@@ -76,14 +86,119 @@ simpler2b = lmer(data=cog.tm,COG.from.BM~Task+Label+Cond+Sex+(1|Spk),REML=FALSE)
 summary(simpler2b)
 
 anova(simpler2a,simpler2b)
-cond.ass.model.cog.from.bm = lmer(data=cog.tm,COG.from.BM~Task+Label+Cond+(1|Spk),REML=TRUE)
+
+
+simpler2c = lmer(data=cog.tm,COG.from.BM~Task+Label+Cond+Label:Task+Label:Cond+(1|Spk),REML=FALSE)
+summary(simpler2c)
+
+simpler2d = lmer(data=cog.tm,COG.from.BM~Task+Label+Cond+Sex+Label:Task+Label:Cond+(1|Spk),REML=FALSE)
+summary(simpler2d)
+
+anova(simpler2c,simpler2d)
+
+anova(simpler2a,simpler2c)
+
+
+cond.ass.model.cog.from.bm = lmer(data=cog.tm,COG.from.BM~Task+Label+Cond+Label:Task+Label:Cond+(1|Spk),REML=TRUE)
 stargazer(cond.ass.model.cog.from.bm,digit.separator="")
 
 
 stargazer(cond.ass.model.cog,cond.ass.model.cog.from.bm,digit.separator="")
 
 
-# WITH IAT
+# Interactions were significant: have to run seperate LMERs on each consonant T_T
+
+cog.tm.s = cog.tm[cog.tm$Label=="s",]
+cog.tm.sh = cog.tm[cog.tm$Label==SH,]
+
+s.test1a = lmer(data=cog.tm.s,COG.from.BM~Task+Cond+(1|Spk),REML=FALSE)
+s.test1b = lmer(data=cog.tm.s,COG.from.BM~Task+Cond+Sex+(1|Spk),REML=FALSE)
+anova(s.test1a,s.test1b)
+
+sh.test1a = lmer(data=cog.tm.sh,COG.from.BM~Task+Cond+(1|Spk),REML=FALSE)
+sh.test1b = lmer(data=cog.tm.sh,COG.from.BM~Task+Cond+Sex+(1|Spk),REML=FALSE)
+anova(sh.test1a,sh.test1b)
+
+
+cond.ass.model.cog.from.bm.s = lmer(data=cog.tm.s,COG.from.BM~Task+Cond+(1|Spk),REML=TRUE)
+cond.ass.model.cog.from.bm.sh = lmer(data=cog.tm.sh,COG.from.BM~Task+Cond+(1|Spk),REML=TRUE)
+stargazer(cond.ass.model.cog.from.bm.s,cond.ass.model.cog.from.bm.sh,digit.separator="")
+
+
+#########################################################################
+
+# WITH IAT INSTEAD OF COND
+
+simpler1a = lmer(data=cog.tm,COG~Task+Label+IAT.score+(1|Spk),REML=FALSE)
+summary(simpler1a)
+
+simpler1b = lmer(data=cog.tm,COG~Task+Label+IAT.score+Sex+(1|Spk),REML=FALSE)
+summary(simpler1b)
+
+anova(simpler1a,simpler1b)
+
+simpler1c = lmer(data=cog.tm,COG~Task+Label+IAT.score+Label:Task+Label:IAT.score+(1|Spk),REML=FALSE)
+summary(simpler1c)
+
+simpler1d = lmer(data=cog.tm,COG~Task+Label+IAT.score+Sex+Label:Task+Label:IAT.score+(1|Spk),REML=FALSE)
+summary(simpler1d)
+
+anova(simpler1c,simpler1d)
+
+anova(simpler1a,simpler1c)
+
+iat.model.cog = lmer(data=cog.tm,COG~Task+Label+IAT.score+Label:Task+Label:IAT.score+(1|Spk),REML=TRUE)
+stargazer(iat.model.cog,digit.separator="")
+
+
+simpler2a = lmer(data=cog.tm,COG.from.BM~Task+Label+IAT.score+(1|Spk),REML=FALSE)
+summary(simpler2a)
+
+simpler2b = lmer(data=cog.tm,COG.from.BM~Task+Label+IAT.score+Sex+(1|Spk),REML=FALSE)
+summary(simpler2b)
+
+anova(simpler2a,simpler2b)
+
+simpler2c = lmer(data=cog.tm,COG.from.BM~Task+Label+IAT.score+Label:Task+Label:IAT.score+(1|Spk),REML=FALSE)
+summary(simpler2a)
+
+simpler2d = lmer(data=cog.tm,COG.from.BM~Task+Label+IAT.score+Sex+Label:Task+Label:IAT.score+(1|Spk),REML=FALSE)
+summary(simpler2b)
+
+anova(simpler2c,simpler2d)
+
+anova(simpler2a,simpler2c)
+
+iat.model.cog.from.bm = lmer(data=cog.tm,COG.from.BM~Task+Label+IAT.score+Task:Label+Label:IAT.score+(1|Spk),REML=TRUE)
+stargazer(iat.model.cog.from.bm,digit.separator="")
+
+
+stargazer(iat.model.cog,iat.model.cog.from.bm,digit.separator="")
+
+
+# Interactions were significant: have to run seperate LMERs on each consonant T_T
+
+cog.tm.s = cog.tm[cog.tm$Label=="s",]
+cog.tm.sh = cog.tm[cog.tm$Label==SH,]
+
+s.test1a = lmer(data=cog.tm.s,COG.from.BM~Task+IAT.score+(1|Spk),REML=FALSE)
+s.test1b = lmer(data=cog.tm.s,COG.from.BM~Task+IAT.score+Sex+(1|Spk),REML=FALSE)
+anova(s.test1a,s.test1b)
+
+sh.test1a = lmer(data=cog.tm.sh,COG.from.BM~Task+IAT.score+(1|Spk),REML=FALSE)
+sh.test1b = lmer(data=cog.tm.sh,COG.from.BM~Task+IAT.score+Sex+(1|Spk),REML=FALSE)
+anova(sh.test1a,sh.test1b)
+
+
+cond.ass.model.cog.from.bm.s = lmer(data=cog.tm.s,COG.from.BM~Task+IAT.score+(1|Spk),REML=TRUE)
+cond.ass.model.cog.from.bm.sh = lmer(data=cog.tm.sh,COG.from.BM~Task+IAT.score+(1|Spk),REML=TRUE)
+stargazer(cond.ass.model.cog.from.bm.s,cond.ass.model.cog.from.bm.sh,digit.separator="")
+
+
+
+#######################################################################################################
+
+# WITH COND AND IAT
 
 # Without random slopes
 
@@ -132,6 +247,35 @@ competitors = list(winner.fml,
                    COG~Label+Task+Sex+Cond+IAT.score+(1+Label+Task|Spk),
                    COG~Label+Task+Sex+Cond+IAT.score+(1+Task|Spk)+(1+Label|Spk)+(1+Cond|Spk))
 compare(cog.tm,competitors) # major improvement!
+
+
+
+
+# Simpler
+
+simpler3a = lmer(data=cog.tm,COG~Task+Label+Cond+IAT.score+(1|Spk),REML=FALSE)
+summary(simpler3a)
+
+simpler3b = lmer(data=cog.tm,COG~Task+Label+Cond+IAT.score+Sex+(1|Spk),REML=FALSE)
+summary(simpler3b)
+
+anova(simpler3a,simpler3b)
+cog.all.fac.model = lmer(data=cog.tm,COG~Task+Label+Cond+IAT.score+Sex+(1|Spk),REML=TRUE)
+
+
+simpler4a = lmer(data=cog.tm,COG.from.BM~Task+Label+Cond+IAT.score+(1|Spk),REML=FALSE)
+summary(simpler4a)
+
+simpler4b = lmer(data=cog.tm,COG.from.BM~Task+Label+Cond+IAT.score+Sex+(1|Spk),REML=FALSE)
+summary(simpler4b)
+
+anova(simpler4a,simpler4b)
+stargazer(simpler4a)
+cog.from.bm.all.fac.model = lmer(data=cog.tm,COG.from.BM~Task+Label+Cond+IAT.score+Sex+(1|Spk),REML=TRUE)
+
+stargazer(cog.all.fac.model,cog.from.bm.all.fac.model,digit.separator="")
+
+
 
 
 #########################################################################
@@ -231,6 +375,12 @@ cog.conv.chg$Phone = ifelse(cog.conv.chg$variable=="chg.s","s",SH)
 models.conversion.chg = lm(value~Cond+Phone,data=cog.conv.chg)
 summary(models.conversion.chg)
 stargazer(models.conversion.chg)
+
+anova(lm(value~Cond+Phone,data=cog.conv.chg),lm(value~Cond+Phone+Cond:Phone,data=cog.conv.chg))
+
+models.conversion.chg.inter = lm(value~Cond+Phone+Cond:Phone,data=cog.conv.chg)
+summary(models.conversion.chg.inter)
+stargazer(models.conversion.chg.inter)
 
 #########################################################################
 

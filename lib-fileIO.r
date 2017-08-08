@@ -76,6 +76,8 @@ read.cog.data = function(){
   filt.data$Task = factor(filt.data$Task)
   filt.data$Label = factor(filt.data$Label)
   
+  filt.data$COG.from.BM = ifelse(filt.data$Label=="s",bm.stim.s-filt.data$COG,filt.data$COG-bm.stim.sh)
+  
   return(filt.data)
 }
 

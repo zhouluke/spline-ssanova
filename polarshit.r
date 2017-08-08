@@ -16,6 +16,9 @@ library(plyr)
 
 setwd("/home/luke/Dropbox/LIN1290/Graphing")
 
+source('lib-fileIO.r')
+def.globals()
+
 #################################################################
 # CONFIGURATION! -- edit me freely!
 #################################################################
@@ -36,7 +39,7 @@ ORIGIN.Y = 0
 
 # For renaming labels
 OLD.LABELS = c("s","S","x")
-NEW.LABELS = c("s", "ʃ", "ɕ")
+NEW.LABELS = c("s", SH, C.FRIC)
 COMP.CONS = c("t","k")
 
 # Graph dimensions for image creation

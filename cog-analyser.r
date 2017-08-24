@@ -18,6 +18,12 @@ def.globals()
 
 ############################################################
 
+cog.chg.per.spk$Cond = factor(cog.chg.per.spk$Cond, levels=c("pos","neg"))
+cog.chg.per.spk[cog.chg.per.spk$Cond=="pos","Shape"] = "d"
+cog.chg.per.spk[cog.chg.per.spk$Cond=="neg","Shape"] = "f"
+
+POINT.SIZE = 2.5
+
 bm.comp.boxplot = function(plot,colour="black",nudge_x=1.5){
   
   RED = "black" #"#BB0000"
@@ -106,8 +112,10 @@ sd.per.spk.task = tapply(filt.data$COG, list(filt.data$SpkTask, filt.data$Label)
 
 png(filename="s-sh-chg-vs-iat.png",width=out.width,height=out.height.small,res=out.res)
 ggplot(data=cog.chg.per.spk,aes(x=IAT.score,y=chg)) + 
-  geom_point(aes(shape=Cond)) + geom_smooth(method='lm') +
-  ylab("∆CoGS (Hz)") + xlab("IAT score") + theme(legend.text=element_text(size=14))
+  geom_point(aes(shape=Cond),size=POINT.SIZE) + geom_smooth(method='lm') +
+  ylab("∆CoGS (Hz)") + xlab("IAT score") + theme(legend.text=element_text(size=14)) +
+  theme(legend.title = element_blank()) +
+  scale_shape_manual(values=c(3,4))
 dev.off()
 
 cor(x=cog.chg.per.spk$IAT,y=cog.chg.per.spk$Chg)
@@ -156,17 +164,21 @@ bm.mean.cog.sh = mean(cog.bm[cog.bm$Label==SH,"COG"])
 
 png(filename="s-dev-chg-vs-iat.png",width=out.width,height=out.height.small,res=out.res)
 ggplot(data=cog.chg.per.spk,aes(x=IAT.score,y=chg.s)) + 
-  geom_point(aes(shape=Cond)) + geom_smooth(method='lm') +
-  ylab("∆CoGB (Hz)") + xlab("IAT score") + 
-  theme(legend.text=element_text(size=14))
+  geom_point(aes(shape=Cond),size=POINT.SIZE) + geom_smooth(method='lm') +
+  ylab("∆CoGB(s) (Hz)") + xlab("IAT score") + 
+  theme(legend.text=element_text(size=14)) + 
+  theme(legend.title = element_blank()) +
+  scale_shape_manual(values=c(3,4))
 dev.off()
 cor(x=cog.chg.per.spk$IAT,y=cog.chg.per.spk$chg.s)
 
 png(filename="sh-dev-chg-vs-iat.png",width=out.width,height=out.height.small,res=out.res)
 ggplot(data=cog.chg.per.spk,aes(x=IAT.score,y=chg.sh)) + 
-  geom_point(aes(shape=Cond)) + geom_smooth(method='lm') +
-  ylab("∆CoGB(Hz)") + xlab("IAT score") +
-  theme(legend.text=element_text(size=14))
+  geom_point(aes(shape=Cond),size=POINT.SIZE) + geom_smooth(method='lm') +
+  ylab(paste0("∆CoGB(",SH,") (Hz)")) + xlab("IAT score") +
+  theme(legend.text=element_text(size=14)) +
+  theme(legend.title = element_blank()) +
+  scale_shape_manual(values=c(3,4))
 dev.off()
 cor(x=cog.chg.per.spk$IAT.score,y=cog.chg.per.spk$chg.sh)
 
@@ -232,6 +244,7 @@ dev.off()
 
 
 pair.wise.chg = concat.cog[concat.cog$variable == "chg",]
+pair.wise.chg$Cond <- factor(pair.wise.chg$Cond, levels=c("pos","neg"))
 
 png(filename="chg-val-cog-pair-wise.png",width=out.width,height=out.height.small,res=out.res)
 ggplot(data=pair.wise.chg, aes(x=Spk, y=value, label=Spk)) +

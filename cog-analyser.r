@@ -212,13 +212,22 @@ range(abs(phone.wise.chg[phone.wise.chg$variable=="chg.sh","value"]))
 
 
 pair.wise.sep = concat.cog[concat.cog$variable %in% c("s.sh.base","s.sh.imit"),]
+pair.wise.sep$Cond <- factor(pair.wise.sep$Cond, levels=c("pos","neg"))
 
 png(filename="chg-cog-pair-wise.png",width=out.width,height=out.height.small,res=out.res)
-ggplot(data=pair.wise.sep, aes(x=Spk, y=value, fill=factor(variable,labels=c("baseline","shadowing")), label=Spk)) +
+
+plot = ggplot(data=pair.wise.sep, aes(x=Spk, y=value, fill=factor(variable,labels=c("baseline","shadowing")), label=Spk)) +
   geom_bar(stat="identity",position = "dodge",width=.75) +
   xlab("Speaker") + ylab("CoGS (Hz)") +
   facet_grid(~Cond, switch = "x", scales = "free_x", space = "free_x") + 
-  theme(legend.title = element_blank())
+  theme(legend.title = element_blank()) +
+  geom_hline(aes(yintercept=bm.stim.s-bm.stim.sh), linetype="dashed") + 
+  annotation_custom(grob=textGrob("BM",hjust=0,gp=gpar(fontsize=10)), xmin=5, xmax=Inf, 
+                    ymin=bm.stim.s-bm.stim.sh, ymax=bm.stim.s-bm.stim.sh) 
+gt <- ggplot_gtable(ggplot_build(plot))
+gt$layout[grepl("panel", gt$layout$name), ]$clip <- "off"
+grid.draw(gt)
+
 dev.off()
 
 

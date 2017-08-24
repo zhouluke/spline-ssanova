@@ -107,7 +107,7 @@ sd.per.spk.task = tapply(filt.data$COG, list(filt.data$SpkTask, filt.data$Label)
 png(filename="s-sh-chg-vs-iat.png",width=out.width,height=out.height.small,res=out.res)
 ggplot(data=cog.chg.per.spk,aes(x=IAT.score,y=chg)) + 
   geom_point(aes(shape=Cond)) + geom_smooth(method='lm') +
-  ylab("∆CoGD(s,ʃ) (Hz)") + xlab("IAT score") + theme(legend.text=element_text(size=14))
+  ylab("∆CoGS (Hz)") + xlab("IAT score") + theme(legend.text=element_text(size=14))
 dev.off()
 
 cor(x=cog.chg.per.spk$IAT,y=cog.chg.per.spk$Chg)
@@ -118,7 +118,7 @@ cor(x=cog.chg.per.spk$IAT,y=cog.chg.per.spk$Chg)
 png(filename="s-sh-chg-vs-base.png",width=out.width,height=out.height.small,res=out.res)
 ggplot(data=cog.chg.per.spk,aes(x=s.sh.base,y=chg)) + 
   geom_point(aes(shape=Cond)) + geom_smooth(method='lm') +
-  ylab("∆CoGD(s,ʃ) (Hz)") + xlab("CoGD(s,ʃ,baseline) (Hz)")
+  ylab("∆CoGS (Hz)") + xlab("CoGS(baseline) (Hz)")
 dev.off()
 
 cor(x=cog.chg.per.spk$s.sh.base,y=cog.chg.per.spk$chg)
@@ -129,7 +129,7 @@ cor(x=cog.chg.per.spk$s.sh.base,y=cog.chg.per.spk$chg)
 png(filename="s-sh-chg-vs-base-abs.png",width=out.width,height=out.height.small,res=out.res)
 ggplot(data=cog.chg.per.spk,aes(x=s.sh.base,y=abs(chg))) + 
   geom_point(aes(shape=Cond)) + geom_smooth(method='lm') +
-  ylab("|∆CoGD(s,ʃ)| (Hz)") + xlab("CoGD(s,ʃ,baseline) (Hz)")
+  ylab("|∆CoGS| (Hz)") + xlab("CoGS(baseline) (Hz)")
 dev.off()
 
 cor(x=cog.chg.per.spk$s.sh.base,y=abs(cog.chg.per.spk$Chg))
@@ -140,7 +140,7 @@ cor(x=cog.chg.per.spk$s.sh.base,y=abs(cog.chg.per.spk$Chg))
 png(filename="s-sh-imit-vs-base.png",width=out.width,height=out.height.small,res=out.res)
 ggplot(data=cog.chg.per.spk,aes(x=s.sh.base,y=s.sh.imit)) + 
   geom_point(aes(shape=Cond)) + geom_smooth(method='lm') +
-  ylab("CoGD(s,ʃ,shadowing) (Hz)") + xlab("CoGD(s,ʃ,baseline) (Hz)")
+  ylab("CoGS(shadowing) (Hz)") + xlab("CoGS(baseline) (Hz)")
 dev.off()
 
 cor(x=cog.chg.per.spk$s.sh.base,y=cog.chg.per.spk$s.sh.imit)
@@ -157,7 +157,7 @@ bm.mean.cog.sh = mean(cog.bm[cog.bm$Label==SH,"COG"])
 png(filename="s-dev-chg-vs-iat.png",width=out.width,height=out.height.small,res=out.res)
 ggplot(data=cog.chg.per.spk,aes(x=IAT.score,y=chg.s)) + 
   geom_point(aes(shape=Cond)) + geom_smooth(method='lm') +
-  ylab("Change in distance from BM (Hz)") + xlab("IAT score") + 
+  ylab("∆CoGB (Hz)") + xlab("IAT score") + 
   theme(legend.text=element_text(size=14))
 dev.off()
 cor(x=cog.chg.per.spk$IAT,y=cog.chg.per.spk$chg.s)
@@ -165,7 +165,7 @@ cor(x=cog.chg.per.spk$IAT,y=cog.chg.per.spk$chg.s)
 png(filename="sh-dev-chg-vs-iat.png",width=out.width,height=out.height.small,res=out.res)
 ggplot(data=cog.chg.per.spk,aes(x=IAT.score,y=chg.sh)) + 
   geom_point(aes(shape=Cond)) + geom_smooth(method='lm') +
-  ylab("Change in distance from BM (Hz)") + xlab("IAT score") +
+  ylab("∆CoGB(Hz)") + xlab("IAT score") +
   theme(legend.text=element_text(size=14))
 dev.off()
 cor(x=cog.chg.per.spk$IAT.score,y=cog.chg.per.spk$chg.sh)
@@ -202,7 +202,7 @@ phone.wise.chg = concat.cog[concat.cog$variable %in% c("chg.s","chg.sh"),]
 png(filename="chg-cog-phone-wise.png",width=out.width,height=out.height.small,res=out.res)
 ggplot(data=phone.wise.chg, aes(x=Spk, y=value, fill=factor(variable,labels=c("s",SH)), label=Spk)) +
   geom_bar(stat="identity",position = "dodge",width=.75) +
-  xlab("Speaker") + ylab("Change in CoG (Hz)") +
+  xlab("Speaker") + ylab("∆CoGB (Hz)") +
   facet_grid(~Condition, switch = "x", scales = "free_x", space = "free_x") + 
   theme(legend.title = element_blank())
 dev.off()
@@ -216,7 +216,7 @@ pair.wise.sep = concat.cog[concat.cog$variable %in% c("s.sh.base","s.sh.imit"),]
 png(filename="chg-cog-pair-wise.png",width=out.width,height=out.height.small,res=out.res)
 ggplot(data=pair.wise.sep, aes(x=Spk, y=value, fill=factor(variable,labels=c("baseline","shadowing")), label=Spk)) +
   geom_bar(stat="identity",position = "dodge",width=.75) +
-  xlab("Speaker") + ylab("CoG separation between s & ʃ (Hz)") +
+  xlab("Speaker") + ylab("CoGS (Hz)") +
   facet_grid(~Cond, switch = "x", scales = "free_x", space = "free_x") + 
   theme(legend.title = element_blank())
 dev.off()
@@ -227,7 +227,7 @@ pair.wise.chg = concat.cog[concat.cog$variable == "chg",]
 png(filename="chg-val-cog-pair-wise.png",width=out.width,height=out.height.small,res=out.res)
 ggplot(data=pair.wise.chg, aes(x=Spk, y=value, label=Spk)) +
   geom_bar(stat="identity",position = "dodge",width=.75) +
-  xlab("Speaker") + ylab("∆CoGD(s,ʃ) (Hz)") +
+  xlab("Speaker") + ylab("∆CoGS (Hz)") +
   facet_grid(~Cond, switch = "x", scales = "free_x", space = "free_x") + 
   theme(legend.title = element_blank())
 dev.off()

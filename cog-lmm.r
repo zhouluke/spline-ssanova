@@ -1,6 +1,6 @@
 
 # Luke Zhou. June 2017.
-# Consolidated RMS & COG analyser.
+# COG LMERs w.r.t. Cond ass't and IAT score
 
 rm(list = ls())
 
